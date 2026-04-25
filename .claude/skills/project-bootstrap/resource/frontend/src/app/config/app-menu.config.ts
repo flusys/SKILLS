@@ -1,0 +1,118 @@
+import { IMenuItem } from '@flusys/ng-layout';
+
+export const APP_MENU: IMenuItem[] = [
+  {
+    id: 'dashboard',
+    labelKey: 'menu.dashboard',
+    icon: 'pi pi-home',
+    iconType: 1,
+    routerLink: ['/'],
+  },
+  {
+    id: 'administration',
+    labelKey: 'menu.administration',
+    icon: 'pi pi-cog',
+    iconType: 1,
+    routerLink: ['/administration'],
+  },
+  {
+    id: 'iam',
+    labelKey: 'menu.iam',
+    icon: 'pi pi-shield',
+    iconType: 1,
+    routerLink: ['/iam'],
+  },
+  {
+    id: 'storage',
+    labelKey: 'menu.storage',
+    icon: 'pi pi-folder',
+    iconType: 1,
+    routerLink: ['/storage'],
+  },
+  {
+    id: 'forms',
+    labelKey: 'menu.forms',
+    icon: 'pi pi-list-check',
+    iconType: 1,
+    routerLink: ['/forms/manage'],
+  },
+  {
+    id: 'email',
+    labelKey: 'menu.email',
+    icon: 'pi pi-envelope',
+    iconType: 1,
+    routerLink: ['/email'],
+  },
+  {
+    id: 'event-manager',
+    labelKey: 'menu.event.manager',
+    icon: 'pi pi-calendar',
+    iconType: 1,
+    routerLink: ['/event-manager'],
+  },
+  {
+    id: 'notifications',
+    labelKey: 'menu.notifications',
+    icon: 'pi pi-bell',
+    iconType: 1,
+    routerLink: ['/notifications'],
+  },
+  {
+    id: 'localization',
+    labelKey: 'menu.localization',
+    icon: 'pi pi-globe',
+    iconType: 1,
+    routerLink: ['/localization'],
+  },
+  {
+    id: 'projects',
+    labelKey: 'menu.projects',
+    icon: 'pi pi-briefcase',
+    iconType: 1,
+    children: [
+      {
+        id: 'projects-active',
+        labelKey: 'menu.projects.active',
+        icon: 'pi pi-check-circle',
+        iconType: 1,
+        routerLink: ['/projects/active'],
+      },
+      {
+        id: 'projects-archived',
+        labelKey: 'menu.projects.archived',
+        icon: 'pi pi-inbox',
+        iconType: 1,
+        children: [
+          {
+            id: 'projects-active',
+            labelKey: 'menu.projects.active',
+            icon: 'pi pi-check-circle',
+            iconType: 1,
+            routerLink: ['/'],
+          },
+          {
+            id: 'projects-archived',
+            labelKey: 'menu.projects.archived',
+            icon: 'pi pi-inbox',
+            iconType: 1,
+            routerLink: ['/projects/archived'],
+          },
+          {
+            id: 'projects-reports',
+            labelKey: 'menu.projects.reports',
+            icon: 'pi pi-chart-bar',
+            iconType: 1,
+            routerLink: ['/projects/reports'],
+          },
+        ],
+      },
+      {
+        id: 'projects-reports',
+        labelKey: 'menu.projects.reports',
+        icon: 'pi pi-chart-bar',
+        iconType: 1,
+        routerLink: ['/projects/reports'],
+      },
+    ],
+  },
+];
