@@ -30,7 +30,7 @@
     "@flusys/nestjs-iam": "^5.0.1",
     "@flusys/nestjs-localization": "^5.0.1",
     "@flusys/nestjs-notification": "^5.0.1",
-    "@flusys/nestjs-shared": "^5.0.1",
+    "@flusys/nestjs-shared": "^5.0.2",
     "@flusys/nestjs-storage": "^5.0.1",
     "@keyv/redis": "^5.1.3",
     "@nestjs/axios": "^4.0.1",
