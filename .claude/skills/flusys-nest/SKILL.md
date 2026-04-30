@@ -374,7 +374,7 @@ If none of these apply, skip this — do not create an empty class.
 |---|---|
 | Create linked entity on register | `onUserCreated` |
 | Add roles/permissions to `/auth/me` | `getProfileExtras` |
-| Extra fields in user list response | `enrichListQuery` + `enrichListItems` |
+| Extra fields in user list response | `enrichListItems` |
 | Save extra profile fields on update | `validateProfileExtras` + `updateProfileExtras` |
 | Multi-step profile sections | `getProfileSections` + `getProfileSectionData` + `updateProfileSection` |
 | Profile file upload/delete | `handleSectionFileUpload` + `handleSectionFileDelete` |
@@ -416,20 +416,10 @@ export class UserEnricher implements IUserEnricher {
   }
 
   // ── USER LIST ENRICHMENT ─────────────────────────────────────────────────
-  // Add extra joins/selects to the user list query. Return extraFields[] so
-  // the service knows which raw columns to map.
-  async enrichListQuery(
-    query: SelectQueryBuilder<User>,
-    user: ILoggedUserInfo | null,
-  ): Promise<{ extraFields: string[] }> {
-    // Example: join IAM roles
-    // query.leftJoin('iam_user_roles', 'iur', 'iur.user_id = user.id')
-    //      .addSelect('iur.role_id', 'roleId');
-    return { extraFields: [] };
-  }
 
   // Transform raw list items after query (add computed fields, map joins).
   async enrichListItems(users: any[], user: ILoggedUserInfo | null): Promise<any[]> {
+    // await qurey on those users,
     return users;
   }
 
@@ -578,3 +568,4 @@ The `templateSlug` values (`'password-reset'`, `'email-verification'`, `'welcome
 - Never hardcode the `resetUrl` / `verifyUrl` base — they are passed in by `AuthEmailService` from `IAuthModuleConfig.frontendUrl`. Ensure `frontendUrl` is set in `AuthModule.forRootAsync` config.
 - Do not call `EmailSendService` directly from business logic for auth emails — always let `AuthEmailService` call `AUTH_EMAIL_PROVIDER`. This keeps retry/error handling centralised.
 - `sendPasswordResetEmail` and `sendVerificationEmail` are **required** on the interface — always implement both even if one is temporarily unused.
+````
