@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2023",
+    "declaration": true, // Generate .d.ts files
+    "removeComments": true, // Strip comments in output
+    "emitDecoratorMetadata": true, // Required for NestJS decorators
+    "experimentalDecorators": true, // Required for NestJS decorators
+    "allowSyntheticDefaultImports": true, // Allows `import x from 'x'` for CommonJS modules
+    "strict": true, // Enable all strict checks (recommended)
+    "strictNullChecks": true, // Already included in "strict", but explicit is fine
+    "forceConsistentCasingInFileNames": true, // File name casing consistency
+    "noImplicitAny": false, // Optional; keep false if needed
+    "strictBindCallApply": true, // Recommended
+    "noFallthroughCasesInSwitch": true, // Recommended
+    "sourceMap": true, // Useful for debugging
+    "rootDir": "./",
+    "outDir": "./dist", // Build output
+    "incremental": true, // Faster rebuilds
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(ng *)",
+      "Bash(npx *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(tree*)",
+      "Bash(ls*)",
+      "Bash(npm publish --access public*)",
+      "Bash(npm version *)",
+      "Bash(npm view @flusys/*)"
+    ],
+    "defaultMode": "plan"
+  }
+}

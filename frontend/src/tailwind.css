@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Scan source files for utility classes */
+@source "../node_modules/@flusys/**/*.{js,mjs}";
+@source "./**/*.{html,ts}";
+
+/* PrimeUI integration */
+@plugin "tailwindcss-primeui";
