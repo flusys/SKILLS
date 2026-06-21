@@ -37,9 +37,8 @@ Full-stack monorepo: Angular 21 frontend + NestJS 11 backend.
 | Skill                                                          | Purpose                                                                                                 |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | [project-bootstrap](.claude/skills/project-bootstrap/SKILL.md) | **New project from PRD** — package selection matrix, all wiring files, build order, first-run checklist |
-| [api-design](.claude/skills/api-design/SKILL.md)               | POST-only RPC, response DTO shapes, status codes                                                        |
+| [api-design](.claude/skills/api-design/SKILL.md)               | Strategy selection, HTTP rules, guards, response DTOs, Domain Action + Full CRUD generation (backend + frontend) |
 | [engineering](.claude/skills/engineering/SKILL.md)             | Code quality, TypeORM patterns, HybridCache, OWASP security — load for any NestJS/Angular code          |
-| [crud](.claude/skills/crud/SKILL.md)                           | Full-stack CRUD — entity, service, controller, DTOs, Angular service, list + form pages                 |
 | [file-traverser](.claude/skills/file-traverser/SKILL.md)       | Batch refactor strategies — signal migration, control flow, repo fix                                    |
 
 ### Package Skills
