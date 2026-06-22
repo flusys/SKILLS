@@ -26,16 +26,16 @@ Read the **entire** PRD before selecting any package. Ask these questions:
 
 **Config values to extract before writing any file:**
 
-| Config                    | PRD Signal                                                                     | Default                          |
-| ------------------------- | ------------------------------------------------------------------------------ | -------------------------------- |
-| `enableCompanyFeature`    | Company accounts, per-company data, org management                             | `true`                           |
-| `permissionMode`          | "role-based only" → `RBAC`; "direct only" → `DIRECT`; "both/flexible" → `FULL` | `'FULL'`                         |
-| `enableEmailVerification` | "verify email", "confirm account"                                              | `true` if email package included |
-| `databaseMode`            | Single DB → `'single'`; per-tenant DBs → `'multi-tenant'`                      | `'single'`                       |
-| `dbType`                  | "MySQL / MariaDB" → `mysql`; "PostgreSQL / Postgres" → `postgres`              | `'mysql'`                        |
-| `appName`                 | Product name                                                                   | from PRD                         |
-| Backend `PORT`            | From PRD or convention                                                         | `3002`                           |
-| Frontend `PORT`           | From PRD or convention                                                         | `3001`                           |
+| Config                    | PRD Signal                                                                                                                                                                                                      | Default                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `enableCompanyFeature`    | Multiple companies / branches / orgs share one database with `company_id` on every table → `true`. Single-company app or per-tenant separate DB → `false`                                                        | `false`                          |
+| `databaseMode`            | Multiple companies/branches in ONE shared DB → `'single'`. Each tenant has its OWN separate database → `'multi-tenant'`. Single company → `'single'`. **Never set `multi-tenant` from "SaaS" wording alone.**  | `'single'`                       |
+| `permissionMode`          | "role-based only" → `RBAC`; "direct only" → `DIRECT`; "both/flexible" → `FULL`                                                                                                                                  | `'FULL'`                         |
+| `enableEmailVerification` | "verify email", "confirm account"                                                                                                                                                                               | `true` if email package included |
+| `dbType`                  | "MySQL / MariaDB" → `mysql`; "PostgreSQL / Postgres" → `postgres`                                                                                                                                               | `'mysql'`                        |
+| `appName`                 | Product name                                                                                                                                                                                                    | from PRD                         |
+| Backend `PORT`            | From PRD or convention                                                                                                                                                                                          | `3002`                           |
+| Frontend `PORT`           | From PRD or convention                                                                                                                                                                                          | `3001`                           |
 
 ### 1.2 Package Selection Matrix
 
@@ -481,6 +481,9 @@ npm start
 | Anti-Pattern                                               | Correct Approach                                                                                                                |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | Include all packages by default                            | Read PRD — include only what's needed                                                                                           |
+| `databaseMode = multi-tenant` for any SaaS/multi-company PRD | `multi-tenant` = each tenant has its OWN separate database. Multiple companies sharing ONE DB = `databaseMode = single` + `enableCompanyFeature = true` |
+| `enableCompanyFeature = false` when PRD has multi-company/branch | If multiple companies or branches share one DB with `company_id` on every table → `enableCompanyFeature = true`           |
+| `company_id` sourced from DTO                              | `company_id` is ALWAYS injected from authenticated user context (`user.companyId`) — never accepted from request DTO           |
 | `getAuthEntitiesByConfig` from `@flusys/nestjs-auth`       | `getEntitiesByConfig` from `@flusys/nestjs-auth/entities`                                                                       |
 | Entity helpers without `/entities` subpath                 | Always `@flusys/nestjs-xxx/entities`                                                                                            |
 | Register `NotificationModule` after `AuthModule`           | NotificationModule MUST come first — provides `NOTIFICATION_ADAPTER` token                                                      |

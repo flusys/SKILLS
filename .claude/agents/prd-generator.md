@@ -42,8 +42,9 @@ Scan the input for these signals and auto-resolve package decisions:
 | form / survey / questionnaire / dynamic fields                  | `nestjs-form-builder` + `ng-form-builder` = yes   |
 | task / board / kanban / ticket / sprint / project tracking      | `nestjs-task-manager` + `ng-task-manager` = yes   |
 | language / i18n / translation / multilingual / locale           | `nestjs-localization` + `ng-localization` = yes   |
-| company / org / organization / tenant / multi-tenant            | `enableCompanyFeature = true`                     |
-| per-tenant database / tenant isolation at DB level              | `databaseMode = multi-tenant`                     |
+| multiple companies / branches / orgs share one database / `company_id` on every table | `enableCompanyFeature = true`, `databaseMode = single` |
+| each tenant gets its OWN separate database / per-tenant DB / database-per-tenant                   | `databaseMode = multi-tenant`, `enableCompanyFeature = false` |
+| single company app / no multi-tenancy / no branch structure                                        | `enableCompanyFeature = false`, `databaseMode = single` |
 | role-based only / RBAC only                                     | `permissionMode = RBAC`                           |
 | direct permission only                                          | `permissionMode = DIRECT`                         |
 | both / flexible permission                                      | `permissionMode = FULL`                           |
@@ -64,7 +65,10 @@ I need a few details before writing the PRDs:
 3. Main entities / data models? (e.g. Invoice, Employee, Product, Order)
    — For each: key fields and any status/state machine?
 4. Any features not mentioned above? (files, email, calendar, forms, notifications, i18n)
-5. Single database or multi-tenant (each company gets its own DB)?
+5. Database structure — pick one:
+   a) Single shared database with multiple companies/branches (row-level isolation via `company_id`) → `enableCompanyFeature = true`, `databaseMode = single`
+   b) Each tenant gets its own separate database → `databaseMode = multi-tenant`, `enableCompanyFeature = false`
+   c) Single company, no branching → `enableCompanyFeature = false`, `databaseMode = single`
 6. Production API URL? (for environment.prod.ts — or leave as <TODO>)
 ```
 
@@ -475,6 +479,11 @@ Next steps:
 ## Hard Rules
 
 - **Never invent values.** Unknown → `<TODO: describe>`.
+- **`databaseMode` vs `enableCompanyFeature` — never confuse these two:**
+  - PRD has **separate database per tenant** → `databaseMode = multi-tenant`, `USE_TENANT_MODE=true`, `enableCompanyFeature = false`
+  - PRD has **multiple companies / branches in one shared database** → `databaseMode = single`, `enableCompanyFeature = true`, `company_id` on every table
+  - PRD is a **single-company app** → `databaseMode = single`, `enableCompanyFeature = false`
+  - "Multi-tenant SaaS" wording alone does NOT mean `databaseMode = multi-tenant` — read whether it means separate DBs or shared DB with company isolation.
 - **Never generate code or run migrations.** This agent writes PRD files only.
 - **One feature PRD per module.** Parent + children entities in the same module = same PRD.
 - **`companyId` is always from user context** — mark as "never from DTO" in every entity table. Non-negotiable.
