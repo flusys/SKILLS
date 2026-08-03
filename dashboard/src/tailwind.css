@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "../node_modules/@flusys/ng-ui/themes/tailwind.scss";
+
+/* Scan source files for utility classes */
+@source "../node_modules/@flusys/**/*.{js,mjs}";
+@source "./**/*.{html,ts}";
