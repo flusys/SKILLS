@@ -138,6 +138,18 @@ actually needed.
 - Package routes use `children: XXX_ROUTES`, never `loadChildren` — they are already lazy.
 - Project-specific conventions (DataSource provider name, app slug, API prefix) belong in this
   file, never in `.claude/skills/` — those are shared and get replaced when the kit is updated.
+- **One owning service per entity in a multi-entity domain.** `develop-feature` groups every
+  entity of a domain into one `modules/<domain>/` folder — the moment that folder holds more than
+  one entity, each entity needs exactly one owning service that is the sole point of entry for
+  `manager.save/update/delete/insert/find/findOne` or `getRepository` calls against it. Every other
+  service in the domain must go through that service's public methods instead of touching the
+  entity directly — add a method to the owning service rather than reaching around it. Read-only
+  reporting services are the one exception: they may query any entity directly for aggregations,
+  but never mutate. Track ownership in a table here as domains grow past one entity, e.g.:
+
+  | Entity | Owning Service |
+  | ------ | -------------- |
+  | `<Entity>` | `<Entity>Service` |
 
 ## Learned Rules
 

@@ -176,6 +176,15 @@ Same domain-not-entity rule as the backend: files live in `modules/<domain>/`
 | 4 | `pages/<entity>-list/<entity>-list.component.ts` | standalone, binds base signals, `@flusys/ng-ui` table |
 | 5 | `pages/<entity>-form/<entity>-form.component.ts` (or `components/<entity>-form/` for a ≤5-field dialog) | standalone form |
 
+Two more files are optional escape hatches, not a default part of every entity — see
+[api-design/references/project-structure.md](../api-design/references/project-structure.md)
+for when each earns its place:
+
+| # | File | Only when |
+| - | ---- | --------- |
+| 6 | `pages/<entity>-view/<entity>-view.component.ts` | the PRD calls for a read-only detail screen the list row and edit form both undersell |
+| 7 | `services/<entity>-form.service.ts` or `services/<entity>-state.service.ts` | a form or list needs state a plain `ApiResourceService` subclass and component-local signals can't hold |
+
 Then: export from the `interfaces/` and `services/` barrels, add this entity's routes to
 `modules/<domain>/<domain>.routes.ts` (create it and lazy-load it once from the authenticated
 `AppLayout` children in `app.routes.ts` if this is the domain's first feature), merge the entity's

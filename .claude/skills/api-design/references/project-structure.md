@@ -76,12 +76,55 @@ modules/<domain>/
   pages/
     <entity-kebab>-list/<entity-kebab>-list.component.ts
     <entity-kebab>-form/<entity-kebab>-form.component.ts     ← or -form-dialog, see Form Strategy
+    <entity-kebab>-view/<entity-kebab>-view.component.ts     ← optional, read-only detail page
+    <domain-kebab>-reports/<domain-kebab>-reports.component.ts  ← optional, aggregate/report page
   components/                       ← optional, shared UI reused across the domain's pages
 ```
 
 The same rule as the backend applies: a second entity in the same domain gets its own file in
 `services/`, `interfaces/`, `pages/`, and its own route block inside `<domain>.routes.ts` — it
 never gets a sibling `app/modules/<entity>/`.
+
+**`-view` and `-reports` pages** are optional siblings of `-list`/`-form`, not a third required
+pair — add them only when the PRD calls for a read-only detail screen (an entity with enough
+related data that the list row and the edit form both undersell it — an invoice, a purchase
+order) or a cross-entity aggregate screen. Don't generate either speculatively.
+
+**Extra per-entity services beyond the base `ApiResourceService` subclass** are the escape hatch
+for a form or list that outgrows plain CRUD state — `<entity-kebab>-form.service.ts` for a
+multi-step or multi-entity form (e.g. building a purchase order with line items before submit),
+`<entity-kebab>-state.service.ts` for state shared across a form/list pair that plain component
+signals can't hold (e.g. a running invoice total). Only add one when a single `ApiResourceService`
+subclass and component-local signals genuinely can't hold the state — most entities need neither.
+
+## App root — `{frontend}/src/app/`
+
+Alongside `modules/`, the app root itself holds cross-domain files that no single domain owns.
+`develop-feature` and `bootstrap` reference several of these by name (`app-menu.config.ts`,
+`permission.guards.ts`, `app-init.guard.ts`) without saying where they live — this is that
+answer:
+
+```
+src/app/
+  app.routes.ts / app.config.ts / app.component.ts   ← framework entry points
+  config/
+    app-menu.config.ts              ← IMenuItem[] per domain, see Frontend § Routing above
+  guards/
+    app-init.guard.ts               ← session/auth/company/IAM restore on load, see bootstrap's Anti-Patterns
+    permission.guards.ts            ← permissionGuard() used by every <domain>.routes.ts
+  services/
+    <cross-cutting>.service.ts      ← app-wide services with no single owning domain (session sync, search adapter)
+  shared/
+    pages/                          ← not-found, no-permission and other non-domain routes
+    pipes/ utils/                   ← generic helpers with no domain owner
+    pdf/                            ← optional, shared document/PDF builders reused by several domains
+  modules/<domain>/                 ← everything above
+```
+
+Nothing here is generated per-feature; `develop-feature` only adds one menu entry and one guard
+reference per domain to the existing `config/` and `guards/` files. Anything a feature needs that
+doesn't belong to its own domain and isn't cross-cutting enough for `shared/` stays out of scope —
+flag it rather than inventing a new app-root folder.
 
 ### Routing
 
