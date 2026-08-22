@@ -98,6 +98,45 @@ or menu entry of its own, and that its fields must reach all four user surfaces 
 registration, profile, admin user list, admin user create/edit. Do not give it a navigation
 entry in the bootstrap PRD; note instead that the existing user screen gains the fields.
 
+**Spot tenant entities.** When the requirements describe an owning organizational unit that every
+other entity belongs to — school, clinic, store, organization, tenant, client, business — check
+whether it is really the FLUSYS `company` (and, if the PRD also describes a sub-unit under it —
+campus, branch, location, department, outlet — that sub-unit is `branch`). `nestjs-auth` /
+`ng-auth` already ship this end to end: a `Company` / `CompanyBranch` entity with full CRUD
+(`CompanyController`, `BranchController` — insert, list, get, update, delete already built), plus
+`enableCompanyFeature` auto-scoping `companyId`/`branchId` from the authenticated user on every
+other entity. This is the same "package already covers it" case as the rule above, just for a
+package that's always installed instead of an optional one. When the mapping fits:
+- Do not write a feature PRD, entity, or CRUD endpoints for the tenant-analog or its sub-unit —
+  it's config plus an already-shipped API, not a module, and gets no navigation entry of its own
+  beyond a note that an existing screen manages it.
+- Map every native-sounding field the requirements list (name, address, phone, email, website,
+  logo) directly onto `Company`/`CompanyBranch`'s own columns — do not redeclare them as entity
+  fields anywhere.
+- Fields with no native column go in `Company`/`CompanyBranch`'s `additionalFields` JSON bag if
+  they're incidental. If a field must be typed, validated, or is filtered/sorted/joined on, give
+  it its own small satellite entity instead — an ordinary company-scoped entity (it gets
+  `companyId` like any other) named after what it actually is (e.g. "Subscription", not "School")
+  — never a second copy of the tenant entity itself. This is a real mechanical requirement, not a
+  style choice: the base `ApiService.getFilterQuery` compiles every filter to
+  `<entity>.<key> = :value` against a real column, so it can never reach into a JSON field — and
+  it's also the pattern `@flusys/*` packages use internally for their own company-scoped data
+  (`email-config-with-company`, `notification-with-company`, `task-board-with-company`,
+  `role-with-company`, …), so a satellite entity here isn't a workaround, it's the convention.
+- Resolve `enableCompanyFeature` / `databaseMode` from the signal table in Step 1.1 as usual (a
+  shared DB across many schools is `single` + `enableCompanyFeature`; a separate DB per school is
+  `multi-tenant`; one school with no sub-units is `enableCompanyFeature = false` and the
+  tenant-analog isn't a row at all — it's just `appName`).
+- Add a **Tenant Mapping** note to the bootstrap PRD (Step 3) naming the domain terms once —
+  `School → companyId`, `Campus → branchId` — so every `<tenant>_id` / `<subunit>_id` FK
+  mentioned anywhere in the requirements (`school_id`, `campus_id`, …) is understood as
+  `companyId` / `branchId`. Do not list those fields on individual entities beyond the existing
+  `<if enableCompanyFeature>` note — one mapping line covers every entity.
+- A UI screen for managing the tenant-analog (e.g. a Super Admin "Schools" page) can still belong
+  in a feature PRD — `ng-auth` ships no UI, only the API — but describe it as calling the
+  existing Company/Branch endpoints plus the satellite entity's endpoints, not as owning a new
+  CRUD API of its own.
+
 **Order the modules.** Modules with no dependencies first, dependents after. `/develop-feature`
 runs one PRD at a time in sequence, so a module can never be built before something it imports
 entities from. This order drives both the `nn` filename prefix and the development-order list in
@@ -141,6 +180,17 @@ or translated content, the matching package must be selected in the bootstrap PR
 | enableEmailVerification | true \| false | email package selected? |
 | ADMIN_EMAIL | admin@<appname>.com | default |
 | ADMIN_PASSWORD | <TODO: set before first run> | must be changed |
+
+<if a tenant entity was mapped in Step 2>
+## Tenant Mapping
+
+The requirements name their own tenant/sub-unit — map every occurrence to FLUSYS's built-in
+company/branch scoping instead of a custom entity or FK field.
+
+| Domain term | Maps to | Notes |
+| ----------- | ------- | ----- |
+| <e.g. School> | `companyId` | not an entity — auto-scoped from the authenticated user |
+| <e.g. Campus/Branch> | `branchId` | omit if the PRD has no sub-unit |
 
 ## Package Selection
 
@@ -213,8 +263,11 @@ One paragraph: what this does, who uses it, why it exists.
 `id`, `createdAt`, `updatedAt`, and `deletedAt` come from the `Identity` base class — do not
 list them.
 
-<if enableCompanyFeature> `companyId` is present on this entity and always comes from the
-authenticated user, never from a request payload.
+<if enableCompanyFeature> `companyId` (and `branchId`, if branches apply) is present on this
+entity and always comes from the authenticated user, never from a request payload. If the
+requirements referred to this as `<tenant>_id` / `<subunit>_id` (e.g. `school_id`, `campus_id`),
+that is this same field under the domain name from the bootstrap PRD's Tenant Mapping — do not
+list it again as a separate field.
 
 **Enums:**
 
@@ -318,6 +371,11 @@ Verify and fix before printing the summary:
 - [ ] Every package a feature PRD relies on is selected in the bootstrap PRD — notifications,
       file attachments, and translated content each require theirs
 - [ ] `enableCompanyFeature` is `true` if any feature entity is company-scoped
+- [ ] No feature PRD defines an entity, or Full/Partial CRUD endpoints, for the requirements' own
+      tenant/sub-unit noun (school, clinic, org, campus, …) when it maps to `companyId`/
+      `branchId` — that CRUD is already shipped by `nestjs-auth`/`ng-auth`
+- [ ] No entity's field list repeats a `<tenant>_id` / `<subunit>_id` FK already covered by the
+      bootstrap PRD's Tenant Mapping
 - [ ] Development order matches the dependency declarations in the feature PRDs
 - [ ] Permission keys are unique across modules and all use `<feature>.<action>` dot.case
 - [ ] No PRD contains implementation detail (imports, decorators, module order, file paths)
@@ -363,6 +421,10 @@ Run in this order:
   is meant.
 - **`companyId` always comes from the authenticated user**, never a request payload. State this
   on every company-scoped entity.
+- **A domain's own tenant noun is `companyId`/`branchId`, not a custom entity.** If the
+  requirements' owning organizational unit (school, clinic, org, …) and its sub-unit (campus,
+  branch, …) match FLUSYS's company/branch scoping, map them there instead of writing a feature
+  PRD for them — record the mapping once in the bootstrap PRD's Tenant Mapping, not per entity.
 - **Permission keys are `<feature>.<action>` in lowercase dot.case** — matching what the IAM
   package and the API skills expect.
 - **One PRD per module.** Parent plus child entities stay together.
