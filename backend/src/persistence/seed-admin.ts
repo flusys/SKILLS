@@ -26,8 +26,8 @@
 // ============================================================================
 // DEFAULT CREDENTIALS (easy to remember for development)
 // ============================================================================
-const DEFAULT_ADMIN_EMAIL = "admin@example.com";
-const DEFAULT_ADMIN_PASSWORD = "Admin@123456";
+const DEFAULT_ADMIN_EMAIL = 'admin@example.com';
+const DEFAULT_ADMIN_PASSWORD = 'Admin@123456';
 // ============================================================================
 
 import {
@@ -59,12 +59,12 @@ import {
   USER_ACTION_PERMISSIONS,
   USER_PERMISSIONS,
   USER_ROLE_PERMISSIONS,
-} from "@flusys/nestjs-shared";
-import * as bcrypt from "bcrypt";
-import { DataSource } from "typeorm";
-import { v4 as uuidv4 } from "uuid";
-import { bootstrapAppConfig } from "../config/modules.config";
-import { migrationConfig } from "./migration.config";
+} from '@flusys/nestjs-shared';
+import * as bcrypt from 'bcrypt';
+import { DataSource } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
+import { bootstrapAppConfig } from '../config/modules.config';
+import { migrationConfig } from './migration.config';
 
 const BCRYPT_SALT_ROUNDS = 12;
 
@@ -78,25 +78,25 @@ const ENABLE_EMAIL = bootstrapAppConfig.enableEmailVerification ?? true;
 
 // Action type enum (matches ActionType in entities)
 enum ActionType {
-  BACKEND = "backend",
-  FRONTEND = "frontend",
-  BOTH = "both",
+  BACKEND = 'backend',
+  FRONTEND = 'frontend',
+  BOTH = 'both',
 }
 
 // Permission type enum (matches IamPermissionType in entities)
 enum IamPermissionType {
-  USER_ROLE = "user_role",
-  ROLE_ACTION = "role_action",
-  USER_ACTION = "user_action",
-  COMPANY_ACTION = "company_action",
+  USER_ROLE = 'user_role',
+  ROLE_ACTION = 'role_action',
+  USER_ACTION = 'user_action',
+  COMPANY_ACTION = 'company_action',
 }
 
 // Entity type enum (matches IamEntityType in entities)
 enum IamEntityType {
-  USER = "user",
-  ROLE = "role",
-  ACTION = "action",
-  COMPANY = "company",
+  USER = 'user',
+  ROLE = 'role',
+  ACTION = 'action',
+  COMPANY = 'company',
 }
 
 // Interfaces
@@ -145,7 +145,7 @@ function buildActionTree(): ActionDefinition[] {
     permissions: Record<string, string>,
   ): ActionDefinition[] => {
     return Object.entries(permissions).map(([key, code]) => {
-      const label = key.toLowerCase().replace(/_/g, " ");
+      const label = key.toLowerCase().replace(/_/g, ' ');
       return {
         name: `${moduleName} ${label.charAt(0).toUpperCase() + label.slice(1)}`,
         code,
@@ -158,33 +158,33 @@ function buildActionTree(): ActionDefinition[] {
   return [
     // Auth Module
     {
-      name: "Auth Module",
-      code: "auth",
-      description: "Authentication and user management",
+      name: 'Auth Module',
+      code: 'auth',
+      description: 'Authentication and user management',
       actionType: ActionType.BOTH,
       children: [
         {
-          name: "User Management",
-          code: "user",
-          description: "User CRUD operations",
+          name: 'User Management',
+          code: 'user',
+          description: 'User CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("User", USER_PERMISSIONS),
+          children: createCrudActions('User', USER_PERMISSIONS),
         },
         ...(ENABLE_COMPANY_FEATURE
           ? [
               {
-                name: "Company Management",
-                code: "company",
-                description: "Company CRUD operations",
+                name: 'Company Management',
+                code: 'company',
+                description: 'Company CRUD operations',
                 actionType: ActionType.BOTH,
-                children: createCrudActions("Company", COMPANY_PERMISSIONS),
+                children: createCrudActions('Company', COMPANY_PERMISSIONS),
               },
               {
-                name: "Branch Management",
-                code: "branch",
-                description: "Branch CRUD operations",
+                name: 'Branch Management',
+                code: 'branch',
+                description: 'Branch CRUD operations',
                 actionType: ActionType.BOTH,
-                children: createCrudActions("Branch", BRANCH_PERMISSIONS),
+                children: createCrudActions('Branch', BRANCH_PERMISSIONS),
               },
             ]
           : []),
@@ -192,36 +192,36 @@ function buildActionTree(): ActionDefinition[] {
     },
     // IAM Module
     {
-      name: "IAM Module",
-      code: "iam",
-      description: "Identity and access management",
+      name: 'IAM Module',
+      code: 'iam',
+      description: 'Identity and access management',
       actionType: ActionType.BOTH,
       children: [
         {
-          name: "Action Management",
-          code: "action",
-          description: "Action CRUD operations",
+          name: 'Action Management',
+          code: 'action',
+          description: 'Action CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Action", ACTION_PERMISSIONS),
+          children: createCrudActions('Action', ACTION_PERMISSIONS),
         },
         {
-          name: "Role Management",
-          code: "role",
-          description: "Role CRUD operations",
+          name: 'Role Management',
+          code: 'role',
+          description: 'Role CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Role", ROLE_PERMISSIONS),
+          children: createCrudActions('Role', ROLE_PERMISSIONS),
         },
         {
-          name: "Permission Assignments",
-          code: "permission-assignment",
-          description: "Permission assignment operations",
+          name: 'Permission Assignments',
+          code: 'permission-assignment',
+          description: 'Permission assignment operations',
           actionType: ActionType.BOTH,
           children: [
-            ...createCrudActions("Role-Action", ROLE_ACTION_PERMISSIONS),
-            ...createCrudActions("User-Role", USER_ROLE_PERMISSIONS),
-            ...createCrudActions("User-Action", USER_ACTION_PERMISSIONS),
+            ...createCrudActions('Role-Action', ROLE_ACTION_PERMISSIONS),
+            ...createCrudActions('User-Role', USER_ROLE_PERMISSIONS),
+            ...createCrudActions('User-Action', USER_ACTION_PERMISSIONS),
             ...(ENABLE_COMPANY_FEATURE
-              ? createCrudActions("Company-Action", COMPANY_ACTION_PERMISSIONS)
+              ? createCrudActions('Company-Action', COMPANY_ACTION_PERMISSIONS)
               : []),
           ],
         },
@@ -229,34 +229,31 @@ function buildActionTree(): ActionDefinition[] {
     },
     // Storage Module
     {
-      name: "Storage Module",
-      code: "storage",
-      description: "File storage management",
+      name: 'Storage Module',
+      code: 'storage',
+      description: 'File storage management',
       actionType: ActionType.BOTH,
       children: [
         {
-          name: "File Management",
-          code: "file",
-          description: "File CRUD operations",
+          name: 'File Management',
+          code: 'file',
+          description: 'File CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("File", FILE_PERMISSIONS),
+          children: createCrudActions('File', FILE_PERMISSIONS),
         },
         {
-          name: "Folder Management",
-          code: "folder",
-          description: "Folder CRUD operations",
+          name: 'Folder Management',
+          code: 'folder',
+          description: 'Folder CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Folder", FOLDER_PERMISSIONS),
+          children: createCrudActions('Folder', FOLDER_PERMISSIONS),
         },
         {
-          name: "Storage Config",
-          code: "storage-config",
-          description: "Storage configuration CRUD operations",
+          name: 'Storage Config',
+          code: 'storage-config',
+          description: 'Storage configuration CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions(
-            "Storage Config",
-            STORAGE_CONFIG_PERMISSIONS,
-          ),
+          children: createCrudActions('Storage Config', STORAGE_CONFIG_PERMISSIONS),
         },
       ],
     },
@@ -264,30 +261,24 @@ function buildActionTree(): ActionDefinition[] {
     ...(ENABLE_EMAIL
       ? [
           {
-            name: "Email Module",
-            code: "email",
-            description: "Email management",
+            name: 'Email Module',
+            code: 'email',
+            description: 'Email management',
             actionType: ActionType.BOTH,
             children: [
               {
-                name: "Email Config",
-                code: "email-config",
-                description: "Email configuration CRUD operations",
+                name: 'Email Config',
+                code: 'email-config',
+                description: 'Email configuration CRUD operations',
                 actionType: ActionType.BOTH,
-                children: createCrudActions(
-                  "Email Config",
-                  EMAIL_CONFIG_PERMISSIONS,
-                ),
+                children: createCrudActions('Email Config', EMAIL_CONFIG_PERMISSIONS),
               },
               {
-                name: "Email Template",
-                code: "email-template",
-                description: "Email template CRUD operations",
+                name: 'Email Template',
+                code: 'email-template',
+                description: 'Email template CRUD operations',
                 actionType: ActionType.BOTH,
-                children: createCrudActions(
-                  "Email Template",
-                  EMAIL_TEMPLATE_PERMISSIONS,
-                ),
+                children: createCrudActions('Email Template', EMAIL_TEMPLATE_PERMISSIONS),
               },
             ],
           },
@@ -295,143 +286,140 @@ function buildActionTree(): ActionDefinition[] {
       : []),
     // Form Builder Module
     {
-      name: "Form Builder Module",
-      code: "form-builder",
-      description: "Form builder management",
+      name: 'Form Builder Module',
+      code: 'form-builder',
+      description: 'Form builder management',
       actionType: ActionType.BOTH,
       children: [
         {
-          name: "Form Management",
-          code: "form",
-          description: "Form CRUD operations",
+          name: 'Form Management',
+          code: 'form',
+          description: 'Form CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Form", FORM_PERMISSIONS),
+          children: createCrudActions('Form', FORM_PERMISSIONS),
         },
         {
-          name: "Form Result Management",
-          code: "form-result",
-          description: "Form result CRUD operations",
+          name: 'Form Result Management',
+          code: 'form-result',
+          description: 'Form result CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Form Result", FORM_RESULT_PERMISSIONS),
+          children: createCrudActions('Form Result', FORM_RESULT_PERMISSIONS),
         },
       ],
     },
     // Event Manager Module
     {
-      name: "Event Manager Module",
-      code: "event-manager",
-      description: "Calendar event management",
+      name: 'Event Manager Module',
+      code: 'event-manager',
+      description: 'Calendar event management',
       actionType: ActionType.BOTH,
       children: [
         {
-          name: "Event Management",
-          code: "event",
-          description: "Event CRUD operations",
+          name: 'Event Management',
+          code: 'event',
+          description: 'Event CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Event", EVENT_PERMISSIONS),
+          children: createCrudActions('Event', EVENT_PERMISSIONS),
         },
       ],
     },
     // Notification Module
     {
-      name: "Notification Module",
-      code: "notification",
-      description: "Notification management",
+      name: 'Notification Module',
+      code: 'notification',
+      description: 'Notification management',
       actionType: ActionType.BOTH,
       children: [
         {
-          name: "Notification Management",
-          code: "notification-item",
-          description: "Notification CRUD operations",
+          name: 'Notification Management',
+          code: 'notification-item',
+          description: 'Notification CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Notification", NOTIFICATION_PERMISSIONS),
+          children: createCrudActions('Notification', NOTIFICATION_PERMISSIONS),
         },
       ],
     },
     // Localization Module
     {
-      name: "Localization Module",
-      code: "localization",
-      description: "Localization and translation management",
+      name: 'Localization Module',
+      code: 'localization',
+      description: 'Localization and translation management',
       actionType: ActionType.BOTH,
       children: [
         {
-          name: "Language Management",
-          code: "language",
-          description: "Language CRUD operations",
+          name: 'Language Management',
+          code: 'language',
+          description: 'Language CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Language", LANGUAGE_PERMISSIONS),
+          children: createCrudActions('Language', LANGUAGE_PERMISSIONS),
         },
         {
-          name: "Translation Key Management",
-          code: "translation-key",
-          description: "Translation key CRUD operations",
+          name: 'Translation Key Management',
+          code: 'translation-key',
+          description: 'Translation key CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions(
-            "Translation Key",
-            TRANSLATION_KEY_PERMISSIONS,
-          ),
+          children: createCrudActions('Translation Key', TRANSLATION_KEY_PERMISSIONS),
         },
         {
-          name: "Translation Management",
-          code: "translation",
-          description: "Translation CRUD operations",
+          name: 'Translation Management',
+          code: 'translation',
+          description: 'Translation CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Translation", TRANSLATION_PERMISSIONS),
+          children: createCrudActions('Translation', TRANSLATION_PERMISSIONS),
         },
       ],
     },
     // Task Manager Module
     {
-      name: "Task Manager Module",
-      code: "task-manager",
-      description: "Task board and project management",
+      name: 'Task Manager Module',
+      code: 'task-manager',
+      description: 'Task board and project management',
       actionType: ActionType.BOTH,
       children: [
         {
-          name: "Task Board Management",
-          code: "task-board",
-          description: "Task board CRUD operations",
+          name: 'Task Board Management',
+          code: 'task-board',
+          description: 'Task board CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Task Board", TASK_BOARD_PERMISSIONS),
+          children: createCrudActions('Task Board', TASK_BOARD_PERMISSIONS),
         },
         {
-          name: "Task List Management",
-          code: "task-list",
-          description: "Task list CRUD operations",
+          name: 'Task List Management',
+          code: 'task-list',
+          description: 'Task list CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Task List", TASK_LIST_PERMISSIONS),
+          children: createCrudActions('Task List', TASK_LIST_PERMISSIONS),
         },
         {
-          name: "Task Management",
-          code: "task",
-          description: "Task CRUD operations",
+          name: 'Task Management',
+          code: 'task',
+          description: 'Task CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Task", TASK_PERMISSIONS),
+          children: createCrudActions('Task', TASK_PERMISSIONS),
         },
         {
-          name: "Task Label Management",
-          code: "task-label",
-          description: "Task label CRUD operations",
+          name: 'Task Label Management',
+          code: 'task-label',
+          description: 'Task label CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Task Label", TASK_LABEL_PERMISSIONS),
+          children: createCrudActions('Task Label', TASK_LABEL_PERMISSIONS),
         },
         {
-          name: "Task Comment Management",
-          code: "task-comment",
-          description: "Task comment CRUD operations",
+          name: 'Task Comment Management',
+          code: 'task-comment',
+          description: 'Task comment CRUD operations',
           actionType: ActionType.BOTH,
-          children: createCrudActions("Task Comment", TASK_COMMENT_PERMISSIONS),
+          children: createCrudActions('Task Comment', TASK_COMMENT_PERMISSIONS),
         },
       ],
     },
     // AI Assistant Module
     {
-      name: "AI Assistant Module",
-      code: "ai-assistant",
-      description: "AI assistant chat, tools, pinned results, chat history",
+      name: 'AI Assistant Module',
+      code: 'ai-assistant',
+      description: 'AI assistant chat, tools, pinned results, chat history',
       actionType: ActionType.BOTH,
-      children: createCrudActions("AI Assistant", AI_ASSISTANT_PERMISSIONS),
+      children: createCrudActions('AI Assistant', AI_ASSISTANT_PERMISSIONS),
     },
   ];
 }
@@ -481,11 +469,7 @@ async function insertActionsRecursively(
         ],
       );
       console.log(`  ✓ Created action: ${action.name} (${action.code})`);
-      insertedActions.push({
-        id: actionId,
-        name: action.name,
-        code: action.code,
-      });
+      insertedActions.push({ id: actionId, name: action.name, code: action.code });
     } else {
       actionId = existingAction.id;
       console.log(`  - Action exists: ${action.name} (${action.code})`);
@@ -508,12 +492,12 @@ async function insertActionsRecursively(
 }
 
 async function seedAdmin(): Promise<void> {
-  console.log("🌱 Starting admin seed...\n");
+  console.log('🌱 Starting admin seed...\n');
   console.log(`📋 Configuration:`);
   console.log(`   - enableCompanyFeature: ${ENABLE_COMPANY_FEATURE}`);
   console.log(`   - permissionMode: ${bootstrapAppConfig.permissionMode}`);
   console.log(`   - enableEmail: ${ENABLE_EMAIL}`);
-  console.log("");
+  console.log('');
 
   // Create DataSource (minimal - no entities needed for raw queries)
   const dataSource = new DataSource({
@@ -528,13 +512,13 @@ async function seedAdmin(): Promise<void> {
   });
 
   await dataSource.initialize();
-  console.log("✓ Database connected\n");
+  console.log('✓ Database connected\n');
 
   const dbType = dataSource.options.type;
   const queryRunner = dataSource.createQueryRunner();
 
   // Both entities use the same table name - the difference is columns
-  const permissionTable = "user_iam_permission";
+  const permissionTable = 'user_iam_permission';
 
   try {
     await queryRunner.connect();
@@ -545,14 +529,14 @@ async function seedAdmin(): Promise<void> {
 
     // 1. Create Company (if company feature enabled)
     if (ENABLE_COMPANY_FEATURE) {
-      console.log("📦 Creating company...");
+      console.log('📦 Creating company...');
       company = (
         await queryRunner.query(
           buildQuery(
             `SELECT id, name, slug FROM company WHERE slug = ? AND deleted_at IS NULL LIMIT 1`,
             dbType,
           ),
-          ["default"],
+          ['default'],
         )
       )[0];
 
@@ -563,23 +547,23 @@ async function seedAdmin(): Promise<void> {
             `INSERT INTO company (id, name, slug, is_active, read_only) VALUES (?, ?, ?, ?, ?)`,
             dbType,
           ),
-          [companyId, "Default Company", "default", true, false],
+          [companyId, 'Default Company', 'default', true, false],
         );
-        company = { id: companyId, name: "Default Company", slug: "default" };
+        company = { id: companyId, name: 'Default Company', slug: 'default' };
         console.log(`   ✓ Company created: ${company.name} (${company.id})`);
       } else {
         console.log(`   - Company exists: ${company.name} (${company.id})`);
       }
 
       // 2. Create Branch
-      console.log("📦 Creating branch...");
+      console.log('📦 Creating branch...');
       branch = (
         await queryRunner.query(
           buildQuery(
             `SELECT id, name, slug, company_id FROM company_branch WHERE slug = ? AND company_id = ? AND deleted_at IS NULL LIMIT 1`,
             dbType,
           ),
-          ["default", company.id],
+          ['default', company.id],
         )
       )[0];
 
@@ -590,14 +574,9 @@ async function seedAdmin(): Promise<void> {
             `INSERT INTO company_branch (id, name, slug, company_id, is_active, read_only) VALUES (?, ?, ?, ?, ?, ?)`,
             dbType,
           ),
-          [branchId, "Default Branch", "default", company.id, true, false],
+          [branchId, 'Default Branch', 'default', company.id, true, false],
         );
-        branch = {
-          id: branchId,
-          name: "Default Branch",
-          slug: "default",
-          company_id: company.id,
-        };
+        branch = { id: branchId, name: 'Default Branch', slug: 'default', company_id: company.id };
         console.log(`   ✓ Branch created: ${branch.name} (${branch.id})`);
       } else {
         console.log(`   - Branch exists: ${branch.name} (${branch.id})`);
@@ -605,7 +584,7 @@ async function seedAdmin(): Promise<void> {
     }
 
     // 3. Create User
-    console.log("\n👤 Creating user...");
+    console.log('\n👤 Creating user...');
     const adminEmail = process.env.ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD;
 
@@ -621,18 +600,15 @@ async function seedAdmin(): Promise<void> {
 
     if (!user) {
       const userId = uuidv4();
-      const hashedPassword = await bcrypt.hash(
-        adminPassword,
-        BCRYPT_SALT_ROUNDS,
-      );
+      const hashedPassword = await bcrypt.hash(adminPassword, BCRYPT_SALT_ROUNDS);
       await queryRunner.query(
         buildQuery(
           `INSERT INTO app_user (id, email, password, name, is_active, email_verified) VALUES (?, ?, ?, ?, ?, ?)`,
           dbType,
         ),
-        [userId, adminEmail, hashedPassword, "Admin User", true, true],
+        [userId, adminEmail, hashedPassword, 'Admin User', true, true],
       );
-      user = { id: userId, email: adminEmail, name: "Admin User" };
+      user = { id: userId, email: adminEmail, name: 'Admin User' };
       console.log(`   ✓ User created: ${user.email} (${user.id})`);
     } else {
       console.log(`   - User exists: ${user.email} (${user.id})`);
@@ -640,7 +616,7 @@ async function seedAdmin(): Promise<void> {
 
     // 4. Create User-Company/Branch Permissions (if company feature enabled)
     if (ENABLE_COMPANY_FEATURE && company && branch) {
-      console.log("\n🔗 Creating company/branch permissions...");
+      console.log('\n🔗 Creating company/branch permissions...');
 
       const companyPermission = (
         await queryRunner.query(
@@ -648,7 +624,7 @@ async function seedAdmin(): Promise<void> {
             `SELECT id FROM user_company_permissions WHERE user_id = ? AND permission_type = ? AND target_id = ? LIMIT 1`,
             dbType,
           ),
-          [user.id, "company", company.id],
+          [user.id, 'company', company.id],
         )
       )[0];
 
@@ -658,7 +634,7 @@ async function seedAdmin(): Promise<void> {
             `INSERT INTO user_company_permissions (id, user_id, permission_type, target_id, is_active) VALUES (?, ?, ?, ?, ?)`,
             dbType,
           ),
-          [uuidv4(), user.id, "company", company.id, true],
+          [uuidv4(), user.id, 'company', company.id, true],
         );
         console.log(`   ✓ Company permission created`);
       } else {
@@ -671,7 +647,7 @@ async function seedAdmin(): Promise<void> {
             `SELECT id FROM user_company_permissions WHERE user_id = ? AND permission_type = ? AND target_id = ? LIMIT 1`,
             dbType,
           ),
-          [user.id, "branch", branch.id],
+          [user.id, 'branch', branch.id],
         )
       )[0];
 
@@ -681,7 +657,7 @@ async function seedAdmin(): Promise<void> {
             `INSERT INTO user_company_permissions (id, user_id, permission_type, target_id, is_active) VALUES (?, ?, ?, ?, ?)`,
             dbType,
           ),
-          [uuidv4(), user.id, "branch", branch.id, true],
+          [uuidv4(), user.id, 'branch', branch.id, true],
         );
         console.log(`   ✓ Branch permission created`);
       } else {
@@ -690,7 +666,7 @@ async function seedAdmin(): Promise<void> {
     }
 
     // 5. Seed All Actions
-    console.log("\n🎯 Seeding actions...");
+    console.log('\n🎯 Seeding actions...');
     const actionTree = buildActionTree();
     const allActions = await insertActionsRecursively(
       queryRunner,
@@ -701,9 +677,7 @@ async function seedAdmin(): Promise<void> {
     );
 
     // 6. Create Direct User-Action Permissions (includes parent/group actions, same as company-action)
-    console.log(
-      "\n🔐 Creating direct user-action permissions (hidden mode)...",
-    );
+    console.log('\n🔐 Creating direct user-action permissions (hidden mode)...');
 
     let createdCount = 0;
     let existsCount = 0;
@@ -779,7 +753,7 @@ async function seedAdmin(): Promise<void> {
 
     // 7. Create Company-Action Permissions (if company feature enabled)
     if (ENABLE_COMPANY_FEATURE && company) {
-      console.log("\n🏢 Creating company-action permissions...");
+      console.log('\n🏢 Creating company-action permissions...');
       let companyActionCreated = 0;
       let companyActionExists = 0;
 
@@ -790,12 +764,7 @@ async function seedAdmin(): Promise<void> {
               `SELECT id FROM ${permissionTable} WHERE permission_type = ? AND source_id = ? AND target_id = ? AND company_id = ? LIMIT 1`,
               dbType,
             ),
-            [
-              IamPermissionType.COMPANY_ACTION,
-              company.id,
-              action.id,
-              company.id,
-            ],
+            [IamPermissionType.COMPANY_ACTION, company.id, action.id, company.id],
           )
         )[0];
 
@@ -822,9 +791,7 @@ async function seedAdmin(): Promise<void> {
         }
       }
 
-      console.log(
-        `   ✓ Created ${companyActionCreated} new company-action permissions`,
-      );
+      console.log(`   ✓ Created ${companyActionCreated} new company-action permissions`);
       if (companyActionExists > 0) {
         console.log(`   - ${companyActionExists} permissions already existed`);
       }
@@ -832,22 +799,22 @@ async function seedAdmin(): Promise<void> {
 
     // 8. Seed Default Email Config (SMTP)
     if (ENABLE_EMAIL) {
-      console.log("\n📧 Creating default email config...");
+      console.log('\n📧 Creating default email config...');
       const existingEmailConfig = (
         await queryRunner.query(
           buildQuery(
             `SELECT id FROM email_config WHERE name = ? AND deleted_at IS NULL LIMIT 1`,
             dbType,
           ),
-          ["Default SMTP"],
+          ['Default SMTP'],
         )
       )[0];
 
       if (!existingEmailConfig) {
-        const smtpHost = process.env.SEED_SMTP_HOST ?? "smtp.gmail.com";
-        const smtpUser = process.env.SEED_SMTP_USER ?? "changeme@example.com";
-        const smtpPass = process.env.SEED_SMTP_PASSWORD ?? "changeme";
-        const smtpFromName = process.env.SEED_SMTP_FROM_NAME ?? "FLUSYS System";
+        const smtpHost = process.env.SEED_SMTP_HOST ?? 'smtp.gmail.com';
+        const smtpUser = process.env.SEED_SMTP_USER ?? 'changeme@example.com';
+        const smtpPass = process.env.SEED_SMTP_PASSWORD ?? 'changeme';
+        const smtpFromName = process.env.SEED_SMTP_FROM_NAME ?? 'FLUSYS System';
         const smtpConfig = {
           host: smtpHost,
           port: 587,
@@ -867,8 +834,8 @@ async function seedAdmin(): Promise<void> {
             ),
             [
               uuidv4(),
-              "Default SMTP",
-              "smtp",
+              'Default SMTP',
+              'smtp',
               JSON.stringify(smtpConfig),
               smtpUser,
               smtpFromName,
@@ -886,8 +853,8 @@ async function seedAdmin(): Promise<void> {
             ),
             [
               uuidv4(),
-              "Default SMTP",
-              "smtp",
+              'Default SMTP',
+              'smtp',
               JSON.stringify(smtpConfig),
               smtpUser,
               smtpFromName,
@@ -896,26 +863,26 @@ async function seedAdmin(): Promise<void> {
             ],
           );
         }
-        console.log("   ✓ Default SMTP email config created");
+        console.log('   ✓ Default SMTP email config created');
       } else {
-        console.log("   - Default email config already exists");
+        console.log('   - Default email config already exists');
       }
     }
 
     // 9. Seed Default Storage Config (Local)
-    console.log("\n📁 Creating default storage config...");
+    console.log('\n📁 Creating default storage config...');
     const existingStorageConfig = (
       await queryRunner.query(
         buildQuery(
           `SELECT id FROM storage_config WHERE name = ? AND deleted_at IS NULL LIMIT 1`,
           dbType,
         ),
-        ["Default Local"],
+        ['Default Local'],
       )
     )[0];
 
     if (!existingStorageConfig) {
-      const localConfig = { basePath: "./uploads" };
+      const localConfig = { basePath: './uploads' };
 
       if (ENABLE_COMPANY_FEATURE && company) {
         await queryRunner.query(
@@ -923,15 +890,7 @@ async function seedAdmin(): Promise<void> {
             `INSERT INTO storage_config (id, name, storage, config, is_active, is_default, company_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             dbType,
           ),
-          [
-            uuidv4(),
-            "Default Local",
-            "local",
-            JSON.stringify(localConfig),
-            true,
-            true,
-            company.id,
-          ],
+          [uuidv4(), 'Default Local', 'local', JSON.stringify(localConfig), true, true, company.id],
         );
       } else {
         await queryRunner.query(
@@ -939,29 +898,22 @@ async function seedAdmin(): Promise<void> {
             `INSERT INTO storage_config (id, name, storage, config, is_active, is_default) VALUES (?, ?, ?, ?, ?, ?)`,
             dbType,
           ),
-          [
-            uuidv4(),
-            "Default Local",
-            "local",
-            JSON.stringify(localConfig),
-            true,
-            true,
-          ],
+          [uuidv4(), 'Default Local', 'local', JSON.stringify(localConfig), true, true],
         );
       }
-      console.log("   ✓ Default local storage config created");
+      console.log('   ✓ Default local storage config created');
     } else {
-      console.log("   - Default storage config already exists");
+      console.log('   - Default storage config already exists');
     }
 
     await queryRunner.commitTransaction();
 
     // Summary
-    console.log("\n" + "═".repeat(60));
-    console.log("✅ Admin seed completed successfully!");
-    console.log("═".repeat(60));
-    console.log("\n📋 Summary:");
-    console.log("─".repeat(40));
+    console.log('\n' + '═'.repeat(60));
+    console.log('✅ Admin seed completed successfully!');
+    console.log('═'.repeat(60));
+    console.log('\n📋 Summary:');
+    console.log('─'.repeat(40));
     console.log(`   User:        ${user.email}`);
     console.log(`   Password:    ${adminPassword}`);
     if (ENABLE_COMPANY_FEATURE && company && branch) {
@@ -969,30 +921,22 @@ async function seedAdmin(): Promise<void> {
       console.log(`   Branch:      ${branch.name}`);
     }
     console.log(`   Actions:     ${allActions.length} total`);
-    console.log(
-      `   Permissions: ${allActions.length} direct user-action permissions`,
-    );
+    console.log(`   Permissions: ${allActions.length} direct user-action permissions`);
     if (ENABLE_COMPANY_FEATURE) {
-      console.log(
-        `   Company Actions: ${allActions.length} company-action permissions`,
-      );
+      console.log(`   Company Actions: ${allActions.length} company-action permissions`);
     }
     if (ENABLE_EMAIL) {
       console.log(
-        `   Email Config: SMTP (${process.env.SEED_SMTP_USER ?? "changeme@example.com"})`,
+        `   Email Config: SMTP (${process.env.SEED_SMTP_USER ?? 'changeme@example.com'})`,
       );
     }
     console.log(`   Storage Config: Local (./uploads)`);
     console.log(`   Task Manager: Boards, Lists, Tasks, Labels, Comments`);
     console.log(`   AI Assistant: Chat, tools, pinned results, chat history`);
-    console.log("─".repeat(40));
-    console.log(
-      "\n💡 Note: Direct user-action permissions work regardless of permission mode.",
-    );
-    console.log("   This user has full access in RBAC, DIRECT, or FULL modes.");
-    console.log(
-      "\n💡 Tip: Set ADMIN_EMAIL env var to use a custom admin email.\n",
-    );
+    console.log('─'.repeat(40));
+    console.log('\n💡 Note: Direct user-action permissions work regardless of permission mode.');
+    console.log('   This user has full access in RBAC, DIRECT, or FULL modes.');
+    console.log('\n💡 Tip: Set ADMIN_EMAIL env var to use a custom admin email.\n');
   } catch (error) {
     await queryRunner.rollbackTransaction();
     throw error;
@@ -1004,6 +948,6 @@ async function seedAdmin(): Promise<void> {
 
 // Run if called directly
 seedAdmin().catch((error) => {
-  console.error("❌ Seed failed:", error);
+  console.error('❌ Seed failed:', error);
   process.exit(1);
 });

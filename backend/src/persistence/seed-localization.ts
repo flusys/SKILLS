@@ -333,7 +333,8 @@ const AUTH_MESSAGES: Record<string, string> = {
   // === UI KEYS — AUTH DOMAIN (AUTH_ROUTES: login, register, forgot-password, reset-password, verify-email) ===
 
   // pages/login/login-page.component.ts
-  "auth.login.welcome": "Welcome back!",
+  "auth.login.welcome": "Welcome!",
+  "auth.login.welcome.back": "Welcome back, {{name}}!",
   "auth.login.sign.in.to.continue": "Sign in to continue to your account",
   "auth.email.label": "Email Address",
   "auth.email.placeholder": "Enter email address",
@@ -473,6 +474,7 @@ const ADMINISTRATIVE_MESSAGES: Record<string, string> = {
   "user.email.verify.success": "Email verified successfully",
   "user.phone.verify.success": "Phone verified successfully",
   "user.status.update.success": "User status updated successfully",
+  "user.lookup.success": "Users retrieved successfully",
 
   // Company CRUD messages (API keys)
   "company.create.success": "Company created successfully",
@@ -664,6 +666,8 @@ const IAM_MESSAGES: Record<string, string> = {
 
   // MY_PERMISSION_MESSAGES (API keys)
   "my.permission.get.success": "Permissions loaded successfully",
+  "my.permission.roles.success": "Roles loaded successfully",
+  "my.permission.actions.success": "Actions loaded successfully",
 
   // IAM_MODE_MESSAGES (API keys)
   "iam.direct.mode.unavailable":
@@ -679,6 +683,8 @@ const IAM_MESSAGES: Record<string, string> = {
   "iam.action.title": "Actions",
   "iam.role.title": "Roles",
   "iam.permission.title": "Permissions",
+  "iam.permission.subtitle":
+    "Assign and manage access across roles, users, and companies",
 
   // pages/action/action-list-page.component.ts
   "iam.action.new": "New Action",
@@ -717,6 +723,10 @@ const IAM_MESSAGES: Record<string, string> = {
   "iam.permission.user.roles": "User Roles",
   "iam.permission.user.actions": "User Actions",
   "iam.permission.company.actions": "Company Actions",
+  "iam.permission.unsaved.changes.title": "Unsaved Changes",
+  "iam.permission.unsaved.changes.message":
+    "You have unsaved permission changes. Switching now will discard them.",
+  "iam.permission.unsaved.changes.discard": "Discard Changes",
 
   // components/logic-builder.component.ts
   "iam.logic.title": "Permission Logic",
@@ -753,6 +763,9 @@ const IAM_MESSAGES: Record<string, string> = {
   "iam.tooltip.assigned.to.role": "Assigned to role",
   "iam.tooltip.click.to.remove.role": "Click to remove",
   "iam.tooltip.click.to.assign.role": "Click to assign to role",
+  "iam.permission.empty.role.actions.title": "Select a role to get started",
+  "iam.permission.empty.role.actions.description":
+    "Choose a role from the dropdown above to view and manage its assigned actions.",
 
   // components/user-action-selector.component.ts
   "iam.permission.select.user": "Select User",
@@ -768,6 +781,9 @@ const IAM_MESSAGES: Record<string, string> = {
   "iam.tooltip.click.to.remove.user": "Click to remove direct permission",
   "iam.tooltip.click.to.assign.user": "Click to assign direct permission",
   "iam.permission.company.required": "Please select a company first",
+  "iam.permission.empty.user.actions.title": "Select a user to get started",
+  "iam.permission.empty.user.actions.description":
+    "Choose a user above to view and manage their direct action permissions.",
 
   // components/company-action-selector.component.ts
   "iam.permission.select.company": "Select Company",
@@ -790,6 +806,10 @@ const IAM_MESSAGES: Record<string, string> = {
   "iam.permission.changes.reverted": "Changes Reverted",
   "iam.permission.selection.reverted":
     "Selection has been reverted to the initial state.",
+  "iam.permission.empty.company.actions.title":
+    "Select a company to get started",
+  "iam.permission.empty.company.actions.description":
+    "Choose a company from the dropdown above to view and manage its action whitelist.",
 
   // components/user-role-selector.component.ts
   "iam.permission.role.assignments": "Role Assignments",
@@ -800,6 +820,9 @@ const IAM_MESSAGES: Record<string, string> = {
   "iam.permission.no.roles.for.user": "No roles available for this user",
   "iam.tooltip.click.to.remove.role.from.user": "Click to remove role",
   "iam.tooltip.click.to.assign.role.to.user": "Click to assign role to user",
+  "iam.permission.empty.user.roles.title": "Select a user to get started",
+  "iam.permission.empty.user.roles.description":
+    "Choose a user above to view and manage their assigned roles.",
 
   // services/action-permission-logic.service.ts
   "iam.logic.unknown.action": "Unknown Action",
@@ -1480,6 +1503,10 @@ const FORM_BUILDER_MESSAGES: Record<string, string> = {
   "form.builder.option.label.placeholder": "Enter option label",
   "form.builder.tooltip.remove.option": "Remove option",
   "form.builder.options.add.option": "Add Option",
+  "form.builder.options.add.other": "Add 'Other' Option",
+  "form.builder.option.other.badge": "Other",
+  "form.builder.other.placeholder.default": "Please specify",
+  "form.builder.other.placeholder.config.label": "Other input placeholder",
   "form.builder.section.visibility": "Section Visibility",
   "form.builder.section.visibility.hint":
     "Control when this section is shown based on field values.",
@@ -1526,6 +1553,8 @@ const FORM_BUILDER_MESSAGES: Record<string, string> = {
   "form.builder.logic.any": "Any",
   "form.builder.logic.hide.section": "Hide Section",
   "form.builder.logic.hide.field": "Hide Field",
+  "form.builder.logic.show.section": "Show Section",
+  "form.builder.logic.show.field": "Show Field",
   "form.builder.logic.make.required": "Make Required",
   "form.builder.logic.jump.to.section": "Jump to Section",
   "form.builder.logic.target": "Target",
@@ -1614,14 +1643,19 @@ const FORM_BUILDER_MESSAGES: Record<string, string> = {
   "form.builder.operator.has.files": "Has files",
   "form.builder.operator.has.no.files": "Has no files",
   "form.builder.logic.action.hide.when": "Hide when...",
+  "form.builder.logic.action.show.when": "Show when...",
   "form.builder.logic.action.require.when": "Require when...",
   "form.builder.logic.action.hide.field.when": "Hide field when...",
+  "form.builder.logic.action.show.field.when": "Show field when...",
   "form.builder.logic.action.make.field.required.when":
     "Make field required when...",
   "form.builder.logic.action.jump.to.section.when": "Jump to section when...",
   "form.builder.logic.action.hide.section.when": "Hide section when...",
+  "form.builder.logic.action.show.section.when": "Show section when...",
   "form.builder.logic.action.hide.this.section.when":
     "Hide this section when...",
+  "form.builder.logic.action.show.this.section.when":
+    "Show this section when...",
 
   // components/builder/canvas/builder-canvas.component.ts
   "form.builder.section.no.sections": "No sections yet",
@@ -1690,9 +1724,12 @@ const FORM_BUILDER_MESSAGES: Record<string, string> = {
   "form.builder.result.no.rating": "No rating",
   "form.builder.result.no.file.uploaded": "No file uploaded",
   "form.builder.result.no.answer": "No answer",
+  "form.builder.result.other.format": "{{label}}: {{text}}",
 
   // services/validation.service.ts
   "form.builder.validation.required": "{{label}} is required",
+  "form.builder.validation.other.required":
+    "Please specify a value for {{label}}",
   "form.builder.validation.email": "Please enter a valid email address",
   "form.builder.validation.must.match.format":
     "{{label}} must match the required format",
@@ -2614,7 +2651,8 @@ export const BENGALI_TRANSLATIONS = {
 
   "auth.session.expired.title": "সেশনের মেয়াদ শেষ",
 
-  "auth.login.welcome": "আবার স্বাগতম!",
+  "auth.login.welcome": "স্বাগতম!",
+  "auth.login.welcome.back": "ফিরে আসার জন্য স্বাগতম, {{name}}!",
   "auth.login.sign.in.to.continue":
     "আপনার অ্যাকাউন্টে চালিয়ে যেতে সাইন ইন করুন",
   "auth.email.label": "ইমেইল ঠিকানা",
@@ -2756,6 +2794,7 @@ export const BENGALI_TRANSLATIONS = {
   "user.email.verify.success": "ইমেইল সফলভাবে যাচাই হয়েছে",
   "user.phone.verify.success": "ফোন সফলভাবে যাচাই হয়েছে",
   "user.status.update.success": "ব্যবহারকারীর স্থিতি সফলভাবে হালনাগাদ হয়েছে",
+  "user.lookup.success": "ব্যবহারকারীরা সফলভাবে পুনরুদ্ধার হয়েছে",
 
   "company.create.success": "কোম্পানি সফলভাবে তৈরি হয়েছে",
   "company.create.many.success": "{{count}}টি কোম্পানি সফলভাবে তৈরি হয়েছে",
@@ -2933,6 +2972,8 @@ export const BENGALI_TRANSLATIONS = {
     "কোম্পানির অ্যাকশন অনুমতিগুলো সফলভাবে পুনরুদ্ধার হয়েছে",
 
   "my.permission.get.success": "অনুমতি সফলভাবে লোড হয়েছে",
+  "my.permission.roles.success": "ভূমিকাগুলো সফলভাবে লোড হয়েছে",
+  "my.permission.actions.success": "অ্যাকশনগুলো সফলভাবে লোড হয়েছে",
 
   "iam.direct.mode.unavailable":
     "RBAC-শুধু মোডে সরাসরি অনুমতি অর্পণ উপলব্ধ নয়",
@@ -2945,6 +2986,8 @@ export const BENGALI_TRANSLATIONS = {
   "iam.action.title": "অ্যাকশনসমূহ",
   "iam.role.title": "ভূমিকাসমূহ",
   "iam.permission.title": "অনুমতিসমূহ",
+  "iam.permission.subtitle":
+    "ভূমিকা, ব্যবহারকারী এবং কোম্পানি জুড়ে অ্যাক্সেস অর্পণ ও পরিচালনা করুন",
 
   "iam.action.new": "নতুন অ্যাকশন",
   "iam.action.name": "অ্যাকশনের নাম",
@@ -2978,6 +3021,10 @@ export const BENGALI_TRANSLATIONS = {
   "iam.permission.user.roles": "ব্যবহারকারীর ভূমিকা",
   "iam.permission.user.actions": "ব্যবহারকারীর অ্যাকশন",
   "iam.permission.company.actions": "কোম্পানির অ্যাকশন",
+  "iam.permission.unsaved.changes.title": "সংরক্ষণ করা হয়নি এমন পরিবর্তন",
+  "iam.permission.unsaved.changes.message":
+    "আপনার অসংরক্ষিত অনুমতি পরিবর্তন রয়েছে। এখন পরিবর্তন করলে তা বাতিল হয়ে যাবে।",
+  "iam.permission.unsaved.changes.discard": "পরিবর্তন বাতিল করুন",
 
   "iam.logic.title": "অনুমতি যুক্তি",
   "iam.logic.add.logic": "যুক্তি যোগ করুন",
@@ -3015,6 +3062,9 @@ export const BENGALI_TRANSLATIONS = {
   "iam.tooltip.assigned.to.role": "ভূমিকায় অর্পিত",
   "iam.tooltip.click.to.remove.role": "সরাতে ক্লিক করুন",
   "iam.tooltip.click.to.assign.role": "ভূমিকায় অর্পণ করতে ক্লিক করুন",
+  "iam.permission.empty.role.actions.title": "শুরু করতে একটি ভূমিকা নির্বাচন করুন",
+  "iam.permission.empty.role.actions.description":
+    "এর অর্পিত অ্যাকশন দেখতে এবং পরিচালনা করতে উপরের ড্রপডাউন থেকে একটি ভূমিকা নির্বাচন করুন।",
 
   "iam.permission.select.user": "ব্যবহারকারী নির্বাচন করুন",
   "iam.permission.select.user.placeholder":
@@ -3033,6 +3083,9 @@ export const BENGALI_TRANSLATIONS = {
   "iam.tooltip.click.to.assign.user": "সরাসরি অনুমতি অর্পণ করতে ক্লিক করুন",
   "iam.permission.company.required":
     "অনুগ্রহ করে প্রথমে একটি কোম্পানি নির্বাচন করুন",
+  "iam.permission.empty.user.actions.title": "শুরু করতে একজন ব্যবহারকারী নির্বাচন করুন",
+  "iam.permission.empty.user.actions.description":
+    "তাদের সরাসরি অ্যাকশন অনুমতি দেখতে এবং পরিচালনা করতে উপরে একজন ব্যবহারকারী নির্বাচন করুন।",
 
   "iam.permission.select.company": "কোম্পানি নির্বাচন করুন",
   "iam.permission.select.company.placeholder":
@@ -3054,6 +3107,9 @@ export const BENGALI_TRANSLATIONS = {
   "iam.permission.changes.reverted": "পরিবর্তন ফেরানো হয়েছে",
   "iam.permission.selection.reverted":
     "নির্বাচন প্রাথমিক অবস্থায় ফেরানো হয়েছে।",
+  "iam.permission.empty.company.actions.title": "শুরু করতে একটি কোম্পানি নির্বাচন করুন",
+  "iam.permission.empty.company.actions.description":
+    "এর অ্যাকশন হোয়াইটলিস্ট দেখতে এবং পরিচালনা করতে উপরের ড্রপডাউন থেকে একটি কোম্পানি নির্বাচন করুন।",
 
   "iam.permission.role.assignments": "ভূমিকা অর্পণ",
   "iam.permission.roles.available": "{{count}}টি ভূমিকা উপলব্ধ",
@@ -3065,6 +3121,9 @@ export const BENGALI_TRANSLATIONS = {
   "iam.tooltip.click.to.remove.role.from.user": "ভূমিকা সরাতে ক্লিক করুন",
   "iam.tooltip.click.to.assign.role.to.user":
     "ব্যবহারকারীতে ভূমিকা অর্পণ করতে ক্লিক করুন",
+  "iam.permission.empty.user.roles.title": "শুরু করতে একজন ব্যবহারকারী নির্বাচন করুন",
+  "iam.permission.empty.user.roles.description":
+    "তাদের অর্পিত ভূমিকা দেখতে এবং পরিচালনা করতে উপরে একজন ব্যবহারকারী নির্বাচন করুন।",
 
   "iam.logic.unknown.action": "অজানা অ্যাকশন",
   "iam.logic.validation.failed": "যাচাইকরণ ব্যর্থ",
@@ -3721,6 +3780,10 @@ export const BENGALI_TRANSLATIONS = {
   "form.builder.option.label.placeholder": "বিকল্প লেবেল লিখুন",
   "form.builder.tooltip.remove.option": "বিকল্প সরান",
   "form.builder.options.add.option": "বিকল্প যোগ করুন",
+  "form.builder.options.add.other": "'অন্যান্য' বিকল্প যোগ করুন",
+  "form.builder.option.other.badge": "অন্যান্য",
+  "form.builder.other.placeholder.default": "অনুগ্রহ করে উল্লেখ করুন",
+  "form.builder.other.placeholder.config.label": "অন্যান্য ইনপুট প্লেসহোল্ডার",
   "form.builder.section.visibility": "বিভাগ দৃশ্যমানতা",
   "form.builder.section.visibility.hint":
     "ফিল্ড মানের উপর ভিত্তি করে এই বিভাগ কখন দেখানো হবে তা নিয়ন্ত্রণ করুন।",
@@ -3765,6 +3828,8 @@ export const BENGALI_TRANSLATIONS = {
   "form.builder.logic.any": "যেকোনো",
   "form.builder.logic.hide.section": "বিভাগ লুকান",
   "form.builder.logic.hide.field": "ফিল্ড লুকান",
+  "form.builder.logic.show.section": "বিভাগ দেখান",
+  "form.builder.logic.show.field": "ফিল্ড দেখান",
   "form.builder.logic.make.required": "প্রয়োজনীয় করুন",
   "form.builder.logic.jump.to.section": "বিভাগে যান",
   "form.builder.logic.target": "লক্ষ্য",
@@ -3852,13 +3917,17 @@ export const BENGALI_TRANSLATIONS = {
   "form.builder.operator.has.files": "ফাইল আছে",
   "form.builder.operator.has.no.files": "কোনো ফাইল নেই",
   "form.builder.logic.action.hide.when": "যখন লুকান...",
+  "form.builder.logic.action.show.when": "যখন দেখান...",
   "form.builder.logic.action.require.when": "যখন প্রয়োজনীয়...",
   "form.builder.logic.action.hide.field.when": "যখন ফিল্ড লুকান...",
+  "form.builder.logic.action.show.field.when": "যখন ফিল্ড দেখান...",
   "form.builder.logic.action.make.field.required.when":
     "যখন ফিল্ড প্রয়োজনীয় করুন...",
   "form.builder.logic.action.jump.to.section.when": "যখন বিভাগে যান...",
   "form.builder.logic.action.hide.section.when": "যখন বিভাগ লুকান...",
+  "form.builder.logic.action.show.section.when": "যখন বিভাগ দেখান...",
   "form.builder.logic.action.hide.this.section.when": "যখন এই বিভাগ লুকান...",
+  "form.builder.logic.action.show.this.section.when": "যখন এই বিভাগ দেখান...",
 
   "form.builder.section.no.sections": "এখনো কোনো বিভাগ নেই",
   "form.builder.section.start.by.adding": "একটি বিভাগ যোগ করে শুরু করুন",
@@ -3920,8 +3989,11 @@ export const BENGALI_TRANSLATIONS = {
   "form.builder.result.no.rating": "কোনো রেটিং নেই",
   "form.builder.result.no.file.uploaded": "কোনো ফাইল আপলোড হয়নি",
   "form.builder.result.no.answer": "কোনো উত্তর নেই",
+  "form.builder.result.other.format": "{{label}}: {{text}}",
 
   "form.builder.validation.required": "{{label}} প্রয়োজন",
+  "form.builder.validation.other.required":
+    "অনুগ্রহ করে {{label}} এর জন্য একটি মান উল্লেখ করুন",
   "form.builder.validation.email": "অনুগ্রহ করে একটি বৈধ ইমেইল ঠিকানা লিখুন",
   "form.builder.validation.must.match.format":
     "{{label}} প্রয়োজনীয় ফরম্যাটের সাথে মিলতে হবে",
@@ -4719,7 +4791,8 @@ export const ARABIC_TRANSLATIONS = {
 
   "auth.session.expired.title": "انتهت صلاحية الجلسة",
 
-  "auth.login.welcome": "مرحباً بعودتك!",
+  "auth.login.welcome": "مرحباً!",
+  "auth.login.welcome.back": "مرحباً بعودتك، {{name}}!",
   "auth.login.sign.in.to.continue": "سجّل الدخول للمتابعة إلى حسابك",
   "auth.email.label": "عنوان البريد الإلكتروني",
   "auth.email.placeholder": "أدخل عنوان البريد الإلكتروني",
@@ -4851,6 +4924,7 @@ export const ARABIC_TRANSLATIONS = {
   "user.email.verify.success": "تم التحقق من البريد الإلكتروني بنجاح",
   "user.phone.verify.success": "تم التحقق من الهاتف بنجاح",
   "user.status.update.success": "تم تحديث حالة المستخدم بنجاح",
+  "user.lookup.success": "تم استرجاع المستخدمين بنجاح",
 
   "company.create.success": "تم إنشاء الشركة بنجاح",
   "company.create.many.success": "تم إنشاء {{count}} شركة بنجاح",
@@ -5014,6 +5088,8 @@ export const ARABIC_TRANSLATIONS = {
     "تم استرجاع صلاحيات إجراءات الشركة بنجاح",
 
   "my.permission.get.success": "تم تحميل الصلاحيات بنجاح",
+  "my.permission.roles.success": "تم تحميل الأدوار بنجاح",
+  "my.permission.actions.success": "تم تحميل الإجراءات بنجاح",
 
   "iam.direct.mode.unavailable":
     "تعيين الصلاحية المباشرة غير متاح في وضع RBAC فقط",
@@ -5027,6 +5103,7 @@ export const ARABIC_TRANSLATIONS = {
   "iam.action.title": "الإجراءات",
   "iam.role.title": "الأدوار",
   "iam.permission.title": "الصلاحيات",
+  "iam.permission.subtitle": "تعيين وإدارة الوصول عبر الأدوار والمستخدمين والشركات",
 
   "iam.action.new": "إجراء جديد",
   "iam.action.name": "اسم الإجراء",
@@ -5060,6 +5137,10 @@ export const ARABIC_TRANSLATIONS = {
   "iam.permission.user.roles": "أدوار المستخدم",
   "iam.permission.user.actions": "إجراءات المستخدم",
   "iam.permission.company.actions": "إجراءات الشركة",
+  "iam.permission.unsaved.changes.title": "تغييرات غير محفوظة",
+  "iam.permission.unsaved.changes.message":
+    "لديك تغييرات صلاحيات غير محفوظة. سيؤدي التبديل الآن إلى إلغائها.",
+  "iam.permission.unsaved.changes.discard": "تجاهل التغييرات",
 
   "iam.logic.title": "منطق الصلاحيات",
   "iam.logic.add.logic": "إضافة منطق",
@@ -5094,6 +5175,9 @@ export const ARABIC_TRANSLATIONS = {
   "iam.tooltip.assigned.to.role": "مُعيّن للدور",
   "iam.tooltip.click.to.remove.role": "انقر للإزالة",
   "iam.tooltip.click.to.assign.role": "انقر للتعيين للدور",
+  "iam.permission.empty.role.actions.title": "اختر دوراً للبدء",
+  "iam.permission.empty.role.actions.description":
+    "اختر دوراً من القائمة أعلاه لعرض وإدارة الإجراءات المعينة له.",
 
   "iam.permission.select.user": "اختر المستخدم",
   "iam.permission.select.user.placeholder": "ابحث واختر مستخدماً",
@@ -5108,6 +5192,9 @@ export const ARABIC_TRANSLATIONS = {
   "iam.tooltip.click.to.remove.user": "انقر لإزالة الصلاحية المباشرة",
   "iam.tooltip.click.to.assign.user": "انقر لتعيين صلاحية مباشرة",
   "iam.permission.company.required": "يرجى اختيار شركة أولاً",
+  "iam.permission.empty.user.actions.title": "اختر مستخدماً للبدء",
+  "iam.permission.empty.user.actions.description":
+    "اختر مستخدماً أعلاه لعرض وإدارة صلاحياته المباشرة.",
 
   "iam.permission.select.company": "اختر الشركة",
   "iam.permission.select.company.placeholder": "ابحث واختر شركة",
@@ -5128,6 +5215,9 @@ export const ARABIC_TRANSLATIONS = {
   "iam.permission.changes.reverted": "تم التراجع عن التغييرات",
   "iam.permission.selection.reverted":
     "تم التراجع عن التحديد إلى الحالة الأولية.",
+  "iam.permission.empty.company.actions.title": "اختر شركة للبدء",
+  "iam.permission.empty.company.actions.description":
+    "اختر شركة من القائمة أعلاه لعرض وإدارة القائمة البيضاء للإجراءات الخاصة بها.",
 
   "iam.permission.role.assignments": "تعيينات الأدوار",
   "iam.permission.roles.available": "{{count}} دور متاح",
@@ -5137,6 +5227,9 @@ export const ARABIC_TRANSLATIONS = {
   "iam.permission.no.roles.for.user": "لا توجد أدوار متاحة لهذا المستخدم",
   "iam.tooltip.click.to.remove.role.from.user": "انقر لإزالة الدور",
   "iam.tooltip.click.to.assign.role.to.user": "انقر لتعيين الدور للمستخدم",
+  "iam.permission.empty.user.roles.title": "اختر مستخدماً للبدء",
+  "iam.permission.empty.user.roles.description":
+    "اختر مستخدماً أعلاه لعرض وإدارة الأدوار المعينة له.",
 
   "iam.logic.unknown.action": "إجراء غير معروف",
   "iam.logic.validation.failed": "فشل التحقق",
@@ -5766,6 +5859,10 @@ export const ARABIC_TRANSLATIONS = {
   "form.builder.option.label.placeholder": "أدخل تسمية الخيار",
   "form.builder.tooltip.remove.option": "إزالة الخيار",
   "form.builder.options.add.option": "إضافة خيار",
+  "form.builder.options.add.other": "إضافة خيار 'آخر'",
+  "form.builder.option.other.badge": "آخر",
+  "form.builder.other.placeholder.default": "يرجى التحديد",
+  "form.builder.other.placeholder.config.label": "العنصر النائب لحقل الإدخال الآخر",
   "form.builder.section.visibility": "رؤية القسم",
   "form.builder.section.visibility.hint":
     "التحكم في متى يظهر هذا القسم بناءً على قيم الحقول.",
@@ -5810,6 +5907,8 @@ export const ARABIC_TRANSLATIONS = {
   "form.builder.logic.any": "أي",
   "form.builder.logic.hide.section": "إخفاء القسم",
   "form.builder.logic.hide.field": "إخفاء الحقل",
+  "form.builder.logic.show.section": "إظهار القسم",
+  "form.builder.logic.show.field": "إظهار الحقل",
   "form.builder.logic.make.required": "جعله مطلوباً",
   "form.builder.logic.jump.to.section": "الانتقال إلى القسم",
   "form.builder.logic.target": "الهدف",
@@ -5896,15 +5995,20 @@ export const ARABIC_TRANSLATIONS = {
   "form.builder.operator.has.files": "يحتوي على ملفات",
   "form.builder.operator.has.no.files": "لا يحتوي على ملفات",
   "form.builder.logic.action.hide.when": "إخفاء عندما...",
+  "form.builder.logic.action.show.when": "إظهار عندما...",
   "form.builder.logic.action.require.when": "مطلوب عندما...",
   "form.builder.logic.action.hide.field.when": "إخفاء الحقل عندما...",
+  "form.builder.logic.action.show.field.when": "إظهار الحقل عندما...",
   "form.builder.logic.action.make.field.required.when":
     "جعل الحقل مطلوباً عندما...",
   "form.builder.logic.action.jump.to.section.when":
     "الانتقال إلى القسم عندما...",
   "form.builder.logic.action.hide.section.when": "إخفاء القسم عندما...",
+  "form.builder.logic.action.show.section.when": "إظهار القسم عندما...",
   "form.builder.logic.action.hide.this.section.when":
     "إخفاء هذا القسم عندما...",
+  "form.builder.logic.action.show.this.section.when":
+    "إظهار هذا القسم عندما...",
 
   "form.builder.section.no.sections": "لا توجد أقسام بعد",
   "form.builder.section.start.by.adding": "ابدأ بإضافة قسم",
@@ -5963,8 +6067,10 @@ export const ARABIC_TRANSLATIONS = {
   "form.builder.result.no.rating": "لا يوجد تقييم",
   "form.builder.result.no.file.uploaded": "لم يتم رفع ملف",
   "form.builder.result.no.answer": "لا توجد إجابة",
+  "form.builder.result.other.format": "{{label}}: {{text}}",
 
   "form.builder.validation.required": "{{label}} مطلوب",
+  "form.builder.validation.other.required": "يرجى تحديد قيمة لـ {{label}}",
   "form.builder.validation.email": "يرجى إدخال عنوان بريد إلكتروني صالح",
   "form.builder.validation.must.match.format":
     "يجب أن يطابق {{label}} التنسيق المطلوب",
