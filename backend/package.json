@@ -6,8 +6,8 @@
   "scripts": {
     "build": "nest build",
     "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "start:dev": "lsof -ti:3002 | xargs kill -9 2>/dev/null; nest start --watch",
+    "start:debug": "lsof -ti:3002 | xargs kill -9 2>/dev/null; nest start --debug --watch",
     "start:prod": "node dist/main",
     "migration": "node -r ts-node/register -r tsconfig-paths/register ./node_modules/@flusys/nestjs-core/cjs/migration/cli.js",
     "migration:generate": "npm run migration -- generate",
