@@ -130,8 +130,8 @@ Requirements map to hooks far more often than they look like they do:
 | "search on <fields>" | `getGlobalSearchQuery` — the only hook wired to the search term |
 | "filter by <field>" | `getFilterQuery` |
 | "sort by <field>" | `getSortQuery` |
-| "show related <entity>" | `getExtraManipulateQuery` (join) |
-| company-scoped rows | `getExtraManipulateQuery` + `applyCompanyFilter` |
+| "show related <entity>" | `getSelectQuery` (join) — **not** `getExtraManipulateQuery`, see below |
+| company-scoped rows | `getSelectQuery` + `applyCompanyFilter` — **not** `getExtraManipulateQuery` |
 | "on create, also …" | `afterInsertOperation` |
 | "cannot delete when …" | `beforeDeleteOperation` |
 | default values, derived columns | `convertSingleDtoToEntity` |
@@ -139,11 +139,14 @@ Requirements map to hooks far more often than they look like they do:
 The full hook table with exact signatures is in
 [api-design/references/crud-generation.md](../api-design/references/crud-generation.md). Read it
 before deciding a requirement needs custom code — a custom `searchProducts()` next to an
-unimplemented `getGlobalSearchQuery` is the failure this ladder exists to prevent.
+unimplemented `getGlobalSearchQuery` is the failure this ladder exists to prevent. That reference
+also explains why tenant scoping and relation JOINs belong in `getSelectQuery`, not
+`getExtraManipulateQuery` — the generated `getById`/`getByIds` endpoints call the former only, so
+putting scoping in the latter leaves single-record reads completely unscoped.
 
 | # | File | Notes |
 | - | ---- | ----- |
-| 1 | `dto/<entity>.dto.ts` | Create + Update + Response DTOs together in one file; validators from the PRD's `## Validation`; no `id`, no `companyId` |
+| 1 | `dto/<entity>.dto.ts` | Create + Update + Response DTOs together in one file; validators from the PRD's `## Validation`; no `id`, no `companyId` — a field the PRD marks "required, default X" means optional-with-server-default (`@IsOptional()` on the DTO, defaulted to X in `convertSingleDtoToEntity` on INSERT only, left `undefined` on UPDATE so an omission there doesn't overwrite the existing value), never a plain required validator — the create form's own default will always send a value and mask the bug from UI testing, but any other API caller hits it immediately |
 | 2 | `services/<entity>.service.ts` | extends `ApiService`; overrides hooks only; injects the DataSource provider |
 | 3 | `controllers/<entity>.controller.ts` | `createApiController()` factory; domain actions as extra methods |
 | 4 | `<domain>.module.ts` | new domain: create it with this controller + service; existing domain: add both to its arrays alongside what's already there |
@@ -152,6 +155,24 @@ The controller uses the factory even for Partial CRUD — narrow it with `enable
 hand-write the handlers. Barrel-export the new files in `dto/index.ts`, `services/index.ts`,
 `controllers/index.ts`, then register the module in `app.module.ts` (new domain only) and add its
 barrel export to `modules/index.ts`.
+
+Every entity/DTO/interface TypeScript property is **camelCase, always** — snake_case is reserved
+exclusively for the DB column name inside `@Column({ name: "..." })`. This is easy to get
+internally-consistently wrong (all-snake_case properties still compile and `tsc` never flags it),
+so it silently ships mismatched JSON keys against the rest of the app. Check this on sight when
+writing or reviewing a new entity, not only when something fails.
+
+**Register the feature's permissions or every endpoint 403s regardless of correct guards.**
+`seed-admin.ts`'s `buildActionTree()` only knows about `@flusys/*` package permissions by default —
+a new feature module's own permission constants (its `<FEATURE>_PERMISSIONS` object) must be
+imported and added as a new branch there via `createCrudActions(...)`, or the `Action` rows backing
+`@RequirePermission` never exist. Do this as part of the build, not as a follow-up: add the branch,
+then re-run `npm run seed:admin` (idempotent) before the feature is considered done. Separately,
+under `permissionMode: 'RBAC'`, direct `USER_ACTION` grants are ignored entirely — an admin needs a
+`Role` with matching `ROLE_ACTION` grants, not just direct grants; `seed-admin.ts`'s existing
+"Super Admin" role covers this for the seeded admin automatically once the branch above is added.
+Live-testing any of this — including as the seeded admin — needs one more step first:
+[references/rbac-live-testing.md](references/rbac-live-testing.md).
 
 ### 5. Angular UI
 
@@ -222,12 +243,21 @@ keys against the PRD.
 Verify, and report honestly on anything that fails:
 
 - [ ] Backend starts; Swagger shows the new endpoints
-- [ ] Frontend compiles with no type errors
+- [ ] Frontend builds with `ng build` — `tsc --noEmit` alone does not catch Angular template
+      type errors (it never checks an inline `template:` string's bindings against the
+      component's declared `@Input()` types, e.g. `style="width: 600px"` on an `@flusys/ng-ui`
+      component that types `style` as `Record<string, string>` compiles under `tsc --noEmit` but
+      fails `ng build`). A build agent self-reporting clean against `tsc --noEmit` has not
+      actually verified this — run `ng build` yourself before considering the feature done.
 - [ ] List page loads, paginates, filters, and searches
 - [ ] Create and update submit and persist
 - [ ] Delete removes the record from the list
-- [ ] Domain actions return what the PRD specifies
-- [ ] A user without the permission gets `403`
+- [ ] Domain actions return what the PRD specifies, against real seeded data — check actual
+      values/math, not just a 200 status
+- [ ] A user with the permission succeeds and a user without it gets `403` — read
+      `references/rbac-live-testing.md` first if this is a live curl test, not a browser session:
+      the permission cache needs an explicit warm-up call after every backend restart, and
+      provisioning a test user under RBAC has a specific schema shape, both documented there
 - [ ] No browser console errors
 
 ## Output

@@ -278,6 +278,14 @@ export class {Entity}Service extends ApiService<
     private readonly dataSourceProvider: {DataSourceProvider},
     @Inject(UtilsService) protected readonly utilsService: UtilsService,
   ) {
+    // The FIRST arg here is the query-builder root alias — `getAll`/`getById` build their query
+    // via `this.repository.createQueryBuilder(this.entityName)`. Every alias string in every hook
+    // below (getSelectQuery/getFilterQuery/getSortQuery/getGlobalSearchQuery/applyCompanyFilter's
+    // entityAlias) must reuse this EXACT string, byte-for-byte — not a snake_case or camelCase
+    // guess at it. A mismatch (e.g. `super("learning-material", ...)` here but
+    // `"learning_material."` in a hook) throws `QueryFailedError: "X" alias was not found` on the
+    // first real `getAll`/`getById` call — silent until then, since `insert`/`update` never touch
+    // these hooks.
     super("{entity}", new HybridCache(60000), utilsService, {Entity}Service.name, true, "{app-slug}", {Entity}, dataSourceProvider);
   }
 
@@ -292,12 +300,24 @@ export class {Entity}Service extends ApiService<
     return entity;
   }
 
+  // Tenant isolation + relation JOINs the response needs — belongs HERE, not in
+  // getExtraManipulateQuery (see the warning below the hook table for why).
   protected override async getSelectQuery(
     query: SelectQueryBuilder<{Entity}>,
-    _user: ILoggedUserInfo | null,
+    user: ILoggedUserInfo | null,
     _select?: string[],
   ): Promise<{ query: SelectQueryBuilder<{Entity}>; isRaw: boolean }> {
     query.addSelect(["{entity}.createdAt", "{entity}.updatedAt"]);
+    query.leftJoinAndSelect("{entity}.category", "category");
+    // <if enableCompanyFeature> — never hand-write `andWhere("{entity}.companyId = ...")`.
+    // The helper reads bootstrapAppConfig so a single-company project (isCompanyFeatureEnabled:
+    // false) doesn't filter to companyId = NULL and silently return zero rows.
+    applyCompanyFilter(
+      query,
+      { isCompanyFeatureEnabled: bootstrapAppConfig.enableCompanyFeature, entityAlias: "{entity}" },
+      user,
+    );
+    if (user?.branchId) query.andWhere("{entity}.branchId = :branchId", { branchId: user.branchId });
     return { query, isRaw: false };
   }
 
@@ -311,22 +331,13 @@ export class {Entity}Service extends ApiService<
     return { query, isRaw: false };
   }
 
-  // JOINs + tenant isolation — always scope to companyId + branchId from JWT
+  // getAll-only extras (e.g. a list-view-only aggregate JOIN). Leave this hook out entirely
+  // unless you have something that must NOT apply to getById/getByIds — see the warning below.
   protected override async getExtraManipulateQuery(
     query: SelectQueryBuilder<{Entity}>,
     _dto: FilterAndPaginationDto,
-    user: ILoggedUserInfo | null,
+    _user: ILoggedUserInfo | null,
   ): Promise<{ query: SelectQueryBuilder<{Entity}>; isRaw: boolean }> {
-    query.leftJoinAndSelect("{entity}.category", "category");
-    // <if enableCompanyFeature> — never hand-write `andWhere("{entity}.companyId = ...")`.
-    // The helper reads bootstrapAppConfig so a single-company project (isCompanyFeatureEnabled:
-    // false) doesn't filter to companyId = NULL and silently return zero rows.
-    applyCompanyFilter(
-      query,
-      { isCompanyFeatureEnabled: bootstrapAppConfig.enableCompanyFeature, entityAlias: "{entity}" },
-      user,
-    );
-    if (user?.branchId) query.andWhere("{entity}.branchId = :branchId", { branchId: user.branchId });
     return { query, isRaw: false };
   }
 }
@@ -361,12 +372,29 @@ optional, and every write hook runs inside the operation's open transaction — 
 | `afterDeleteOperation` | `({ id }[], DeleteDto, user, queryRunner)` | post-delete cleanup |
 | `getFilterQuery` | `(query, filter, user)` | per-column filters |
 | `getSortQuery` | `(query, sort, user)` | custom sort columns |
-| `getSelectQuery` | `(query, user, select?)` | default SELECT columns |
+| `getSelectQuery` | `(query, user, select?)` | default SELECT columns, relation JOINs, and tenant isolation (`applyCompanyFilter`) |
 | `getGlobalSearchQuery` | `(query, search, user)` | **the search box** — free-text across columns |
-| `getExtraManipulateQuery` | `(query, dto, user)` | JOINs and tenant isolation |
+| `getExtraManipulateQuery` | `(query, dto, user)` | `getAll`-only extras (pagination-context manipulation) — never scoping or JOINs a single-record response needs, see warning below |
 | `convertRequestDtoToEntity` | `(dto \| dto[], user)` | rarely — dispatches to the two below |
-| `convertSingleDtoToEntity` | `(dto, user)` | DTO → entity mapping |
+| `convertSingleDtoToEntity` | `(dto, user)` | DTO → entity mapping — **always** set `entity.companyId`/`entity.branchId` here, see warning below |
 | `convertArrayDtoToEntities` | `(dtos[], user)` | bulk DTO → entity mapping |
+
+**`getSelectQuery` vs `getExtraManipulateQuery` — do not swap these.** The generated `getById`/
+`getByIds` endpoints call `getSelectQuery` only; `getExtraManipulateQuery` fires for `getAll`
+alone. Put `applyCompanyFilter` and any relation `JOIN` a single-record response needs in
+`getSelectQuery` — putting either one only in `getExtraManipulateQuery` leaves `getById`/`getByIds`
+completely unscoped (any authenticated user holding `.read` can fetch another company's row by
+UUID) and silently drops the joined relation from single-record responses. Verify a new CRUD
+feature with at least one live `getAll` call AND one live `getById` call before considering it
+done — `insert`/`update` alone never exercise either hook and won't surface this.
+
+**`convertSingleDtoToEntity` must set `entity.companyId`/`entity.branchId` explicitly, every
+time.** The base class's DTO→entity conversion only auto-copies fields that exist on the DTO, and
+`companyId`/`branchId` deliberately never do (a client must never supply them) — an override that
+forgets this line compiles fine, every other field looks correct in the create response, but the
+row silently gets `companyId: null` and becomes permanently invisible to `getAll`/`getById` once
+`applyCompanyFilter` scopes by the real company id. Grep every new service for this line before
+calling it done.
 | `convertEntityToResponseDto` | `(entity, isRaw)` | shape a single response |
 | `convertEntityListToResponseListDto` | `(entities[], isRaw)` | shape a list response |
 
@@ -730,20 +758,21 @@ override async beforeUpdateOperation(dto, _user, _qr) { this._pendingDto = Array
 **Shared — response mapping + query hooks (same for both options):**
 
 ```typescript
+// A manually-built response object for an entity extending `Identity`/`IIdentity` must include
+// all six base fields — `id`, `createdAt`, `updatedAt`, `deletedAt`, `createdById`, `updatedById`,
+// `deletedById` — not just the two or three an entity's own doc comment usually calls out.
+// `IIdentity` requires all six as non-optional; spread the source entity (`...entity`) plus
+// overrides, or list all six explicitly, so `tsc` doesn't fail with "missing properties:
+// deletedAt, createdById, updatedById, deletedById" the moment strict checking runs.
 protected override convertEntityToResponseDto(entity: Invoice, _isRaw: boolean): IInvoice {
   return {
-    id: entity.id,
-    number: entity.number,
-    date: entity.date,
+    ...entity,
     items: (entity.items ?? []).map((item) => ({
-      id: item.id,
-      invoiceId: item.invoiceId,
+      ...item,
       description: item.description,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
     })),
-    createdAt: entity.createdAt,
-    updatedAt: entity.updatedAt,
   };
 }
 
@@ -751,7 +780,9 @@ override convertEntityListToResponseListDto(entities, isRaw) {
   return entities.map((e) => this.convertEntityToResponseDto(e, isRaw));
 }
 
-protected override async getExtraManipulateQuery(query, _dto, _user) {
+// The `items` JOIN belongs in getSelectQuery, not getExtraManipulateQuery — getById/getByIds
+// only call the former, so a JOIN placed only here silently vanishes from single-record responses.
+protected override async getSelectQuery(query, _user, _select?) {
   query.leftJoinAndSelect("invoices.items", "items");
   return { query, isRaw: false };
 }

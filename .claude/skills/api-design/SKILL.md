@@ -234,6 +234,18 @@ Cross-package side effects — call from an `afterInsertOperation`/`afterUpdateO
 from a Domain Action service. Every token lives on `@flusys/nestjs-shared`; always inject with
 `@Optional()` so the service still works when the corresponding package is not selected.
 
+**`@Optional()` must always be paired with an explicit `@Inject(Token)` — never rely on
+`@Optional()` alone with a bare TypeScript type, even for a same-project cross-module class (not
+just these token-based adapters).** The same best-effort shape shows up whenever one feature
+module wants to call another feature module's service without a hard dependency — e.g. a
+`PaymentService` that best-effort posts into an `AccountingService` if that module happens to be
+selected. `@Optional() private readonly accountingService: AccountingService | null` (no
+`@Inject()`) silently resolves to `null` at runtime with **zero errors or logs anywhere**, even
+when the providing module correctly exports and the consuming module correctly imports it — the
+only symptom is the expected side effect quietly never happening. Always write it as
+`@Optional() @Inject(AccountingService) private readonly accountingService: AccountingService |
+null`.
+
 This list is not exhaustive by construction — grep
 `node_modules/@flusys/nestjs-shared/interfaces` for `*_ADAPTER` before assuming a cross-package
 capability needs custom code. Three are confirmed as of this writing:
@@ -335,6 +347,16 @@ Use when there is **no entity lifecycle** — business actions only: summaries, 
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class DashboardController {
   constructor(private readonly service: DashboardService) {}
+
+  // A `@Query()` DTO field of any non-string type needs an explicit `@Transform` before its
+  // class-validator decorator — the template's global `ValidationPipe` sets
+  // `transformOptions: { enableImplicitConversion: false }`, so query params (always strings on
+  // the wire) are never auto-coerced. A plain `@IsInt() page?: number` or
+  // `@IsBoolean() active?: boolean` rejects every real request with that param set.
+  //   @Transform(({ value }) => (value === undefined ? value : Number(value)))
+  //   @IsOptional() @IsInt() page?: number;
+  //   @Transform(({ value }) => value === 'true')
+  //   @IsOptional() @IsBoolean() active?: boolean;
 
   // Read → GET + SingleResponseDto
   @Get("summary")
@@ -594,7 +616,7 @@ stated there.
 - [ ] Service extends `ApiService` from `@flusys/nestjs-shared/classes`
 - [ ] `@Injectable({ scope: Scope.REQUEST })`, no `@InjectRepository`
 - [ ] `convertSingleDtoToEntity` calls `super.convertSingleDtoToEntity()` first
-- [ ] `getExtraManipulateQuery` filters by `companyId` + `branchId` from JWT user
+- [ ] `getSelectQuery` (not `getExtraManipulateQuery`) filters by `companyId` + `branchId` from JWT user and carries any relation JOIN a single-record response needs — `getById`/`getByIds` never call `getExtraManipulateQuery`, see [api-design/references/crud-generation.md](references/crud-generation.md)
 - [ ] `const BaseController = createApiController(...)` pattern — no inline extends
 - [ ] `enabledEndpoints` used for partial CRUD — never manually override base methods
 - [ ] Module: `DataSourceProvider` + service in `providers`; service in `exports`

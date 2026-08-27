@@ -35,7 +35,9 @@ if ! grep -q "applyCompanyFilter" "$file_path"; then
     reason: (
       "\($f) manages a company-scoped entity (companyId column present) but never calls " +
       "applyCompanyFilter. CLAUDE.md/security.md: every list/get query on a company-scoped " +
-      "entity must be filtered. Add, inside getExtraManipulateQuery or getFilterQuery:\n" +
+      "entity must be filtered. Add it inside getSelectQuery (getById/getByIds only call this " +
+      "hook, not getExtraManipulateQuery — putting the filter there alone leaves single-record " +
+      "reads unscoped):\n" +
       "  applyCompanyFilter(query, { isCompanyFeatureEnabled: bootstrapAppConfig.enableCompanyFeature, entityAlias }, user)\n" +
       "If this service intentionally reads across companies (e.g. a super-admin report), add a " +
       "`// company-filter: exempt — <reason>` comment instead of a filter call."

@@ -172,6 +172,23 @@ service that genuinely needs to read across companies (a super-admin report) opt
 in the first place — and auto-loads whenever a controller or service file under `modules/` is
 open, the same mechanism `entities.md`/`migrations.md` use for the kit's other two Hard Rules.
 
+**The same leak has a write-path variant, easy to miss because nothing reads the row back in the
+same request.** A `before*Operation` FK-existence check (validating that a DTO's `otherEntityId`
+refers to a real row before insert/update) needs `companyId` in its `where` clause too:
+
+```typescript
+// ❌ Lets a Company A user reference (and later read back) a Company B row by UUID
+const category = await queryRunner.manager.findOne(Category, { where: { id: dto.categoryId } });
+
+// ✅ — pass `user` into every FK-validation helper and scope it
+const category = await queryRunner.manager.findOne(Category, {
+  where: { id: dto.categoryId, ...(user?.companyId ? { companyId: user.companyId } : {}) },
+});
+```
+
+Skip the filter only for a genuinely **global**, non-company-scoped entity (a shared catalog every
+company may reference) — confirm that before treating any FK target as global.
+
 ```typescript
 // ❌ Returns ALL tenants' data
 await this.repository.find({ where: { deletedAt: IsNull() } });
@@ -242,6 +259,14 @@ const isValid = type && allowedMimes.includes(type.mime);
 ```
 
 Never: execute uploads, store without validation, trust client MIME type, allow path traversal in filenames.
+
+**Server-generated files uploaded via `@flusys/nestjs-storage`'s `UploadService.uploadSingleFile`**
+(a stub report, CSV/PDF export, data dump a service builds and stores on the backend — not a user
+upload) must declare a `mimetype` from that service's own fixed allowlist: `image/*`,
+`application/pdf`, Word/Excel formats, or `text/*` — nothing else, including `application/json`.
+The validator rejects anything outside it regardless of whether the file content is actually well
+formed. If the natural content type isn't on the list (e.g. a JSON export), declare `text/plain`
+instead — it still matches the `text/*` wildcard and the filename/content are unaffected.
 
 ## Angular Authorization
 

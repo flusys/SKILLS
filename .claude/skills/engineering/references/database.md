@@ -108,6 +108,19 @@ const products = await this.repository
 
 **Rule:** Accessing a relation inside a loop or `.map()` = N+1. Always load it upfront.
 
+**In a raw `.where()`/`.andWhere()` string, never put a `::cast` directly after an
+`alias.propertyName` with no separator.** TypeORM's alias/property-name substitution regex doesn't
+fire across a cast glued straight onto the property name:
+
+```typescript
+// ❌ substitution doesn't fire — "messageThread" passes through unmapped and unquoted, Postgres
+// case-folds it, and this throws `missing FROM-clause entry for table "messagethread"`
+.andWhere('"messageThread".participantsJson::jsonb @> :param::jsonb', { param })
+
+// ✅ spell out the real quoted alias and real snake_case column directly instead of relying on substitution
+.andWhere('"messageThread"."participants_json"::jsonb @> :param::jsonb', { param })
+```
+
 ## Bulk Operations
 
 ```typescript
@@ -173,7 +186,26 @@ yet, add a method to the owning service rather than reaching around it; if enfor
 the last use of an entity import in the caller file, delete that import too.
 
 This matters most once a domain has 3+ services that could plausibly touch the same table — for a
-single-service module it's not worth the ceremony.
+single-service module it's not worth the ceremony. **The rule applies across feature/module
+boundaries too, not just within one feature's own multi-entity domain.** If feature B needs to
+read-or-create a row belonging to an entity owned by feature A, add a small additive public method
+to feature A's owning service (e.g. `FeeHeadService.findOrCreateByName`) instead of calling
+`manager.findOne`/`manager.save`/`getRepository` on it directly from feature B — "the entity has no
+extra validation beyond what I'm replicating here" is exactly the reasoning that erodes the
+boundary the moment a second caller does the same thing.
+
+**Never a mutual `forwardRef()` between two `Scope.REQUEST` owning services**, even when the
+circular dependency is genuine (two entities in the same domain whose services need to call each
+other). Nest resolves the cycle by silently handing a later request's resolution a stub instance
+whose constructor never ran — every constructor-injected field is `undefined`, so the first
+request after a reload can still succeed (masking it in a quick manual test) while every
+subsequent request 500s with something like `Cannot read properties of undefined (reading
+'getRepository')`. Instead: never constructor-inject the peer; inject `ModuleRef` (singleton, safe)
+and `@Optional() @Inject(REQUEST) request?: Request`, then add a private `get<Peer>()` method that
+resolves and memoizes `this.moduleRef.resolve(PeerType,
+ContextIdFactory.getByRequest(this.request), { strict: false })` once per request instance. Reach
+for this pattern by default on both sides whenever two request-scoped owning services need each
+other — never `forwardRef()` for this case.
 
 ## DB Checklist
 

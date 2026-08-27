@@ -54,7 +54,7 @@ Leave the `scripts` block alone — `migration:*`, `seed:*`, and `start:*` are a
 | Key | Set to |
 | --- | ------ |
 | `PORT` | backend port (default `3002`) |
-| `MODE` | `development` |
+| `MODE` | the literal value `DEV` (case-insensitive) — **never** `development` (see note below) |
 | `ALLOW_ORIGINS`, `FRONTEND_URL`, `APP_URL` | must match the frontend port |
 | `DB_TYPE` | `postgres` or `mysql` — from the PRD |
 | `DB_HOST` | from PRD, else `localhost` |
@@ -70,6 +70,11 @@ Leave the `scripts` block alone — `migration:*`, `seed:*`, and `start:*` are a
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | seed admin credentials — from PRD, else safe defaults |
 
 > The database name key is **`DB_NAME`**, not `DB_DATABASE`.
+
+> `@flusys/nestjs-core`'s `envConfig.isProduction()` does
+> `getValue('MODE').toUpperCase() !== 'DEV'` — any value other than `DEV` (including the
+> intuitive-looking `development`) is treated as production. This silently disables Swagger doc
+> generation with no error, and every `/api/docs/*` route 404s with no indication why.
 
 ---
 

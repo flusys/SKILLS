@@ -263,6 +263,36 @@ npm run start:dev
 npm start
 ```
 
+**Known package issue — check this once, right after install.** `@flusys/nestjs-shared`'s
+`createApiController()` has shipped, in at least one version, with the generated `insert`/`update`
+endpoints' body-parameter reflection metadata pointing at the generic type parameters
+(`CreateDtoT`/`UpdateDtoT`) instead of the real DTO classes. Generics are erased at compile time,
+so NestJS's `ValidationPipe` sees a generic `Object` metatype and **silently skips validation
+entirely** on `insert`/`update`/`insertMany`/`updateMany`/`bulkUpsert`/`getByFilter` for every
+entity in the app — missing/invalid required fields pass straight through instead of a clean 400.
+This is invisible unless specifically tested for (a valid payload still round-trips correctly).
+
+Diagnose it directly: after the first `insert` endpoint exists (even a placeholder entity),
+`POST` a payload missing a `@IsNotEmpty()` field and confirm you get a `400`, not a `200`/`500`.
+If validation is bypassed, open
+`node_modules/@flusys/nestjs-shared/{cjs,fesm}/**/*.js` for the file backing
+`createApiController` and look for the DTO metatype the generated method's parameter decorator
+references — if it resolves the generic type param instead of the closure's real
+`createDtoClass`/`updateDtoClass`, fix it with `patch-package`:
+`npx patch-package @flusys/nestjs-shared` after hand-editing the file in `node_modules`, then add
+`"postinstall": "patch-package"` to `backend/package.json`'s `scripts` (or append to an existing
+postinstall) and commit the generated `backend/patches/*.patch` file. Confirm the postinstall step
+also runs in any Docker/CI image, or the fix silently reverts on the next clean install.
+
+Fixing this also requires `forbidNonWhitelisted: false` (keep `whitelist: true`) in `main.ts`'s
+global `ValidationPipe` — the package's own `SetCreatedByOnBody`/`SetUpdateByOnBody`/`Slug`
+interceptors inject `createdById`/`updatedById`/`slug` into the request body before the pipe runs,
+and no DTO whitelists those fields (correctly — they come from `@CurrentUser()`, never the body).
+With `forbidNonWhitelisted: true` every insert/update fails regardless of the metatype fix. Note
+`insertMany`/`updateMany`/`bulkUpsert` still won't get per-item validation even after this fix —
+NestJS's `ValidationPipe` excludes a bare `Array` metatype by design, not something a patch can
+touch — prefer the singular `insert`/`update` endpoints when validation matters.
+
 ---
 
 ## Optional — Database MCP Server
@@ -308,6 +338,8 @@ Report each item honestly. Do not mark one passed that you did not actually obse
 - [ ] Every selected package's route (`/iam`, `/storage`, …) resolves — no chunk-load errors
 - [ ] (localization selected) `| translate` shows real values, not raw keys
 - [ ] (notification selected) socket connects after login and disconnects after logout
+- [ ] An `insert` call missing a required field returns `400`, not `200`/`500` — the known
+      `createApiController` validation-bypass issue above is silent otherwise
 
 A route that 404s or fails to load a chunk means a package was removed from `package.json` but
 its `XXX_ROUTES` entry is still in `app.routes.ts`. Check both sides.
