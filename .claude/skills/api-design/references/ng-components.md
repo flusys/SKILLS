@@ -29,6 +29,19 @@ import {
 | `FileSelectorDialogComponent` | `[(visible)]` only | No | No |
 | `IconComponent` | No | No | No — display only |
 
+**A dropdown for an entity that is ambiguous by name alone once more than one exists in parallel —
+a Class/Section once a school has more than one academic year live, a Location once a company has
+more than one branch — needs a composed label ("Class Name - Academic Year"), not the bare
+`name` field.** Write one shared label helper per such entity (e.g. `getClassLabel`,
+`getSectionLabel` in a small `*.util.ts`) and have every component building that entity's
+`optionLabel`/display string call it, rather than each component re-deriving its own ad hoc
+`${a} - ${b}` template independently — a retrofit across ~20 already-built components on this
+project is exactly the cost of skipping this the first time. This also means: never narrow a
+fetched entity down to a slimmer local shape before storing it in a signal just because a list view
+only needs a few fields — if the parent relation (e.g. `class.academicYear`) was already joined by
+the service, keep it on the stored object, or the label helper has nothing to compose from by the
+time the dropdown renders.
+
 ## `lib-lazy-select` — single value, lazy search, infinite scroll
 
 **Required:** `[optionLabel]` `[optionValue]` `[isEditMode]` `[isLoading]` `[total]` `[pagination]` `[selectDataList]`

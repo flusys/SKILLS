@@ -121,6 +121,31 @@ fire across a cast glued straight onto the property name:
 .andWhere('"messageThread"."participants_json"::jsonb @> :param::jsonb', { param })
 ```
 
+**A `leftJoinAndSelect` does not pull in that relation's own relations — a second-level join must
+be added explicitly, and separately in every query builder that independently joins the same
+first-level relation, since there is no single shared join site.** `getSelectQuery` joining
+`section.classEntity` does not also give you `classEntity.academicYear`, even though a query that
+loads `Class` directly joins `academicYear` in its own `getSelectQuery` — the relation isn't
+transitive across a second, independent join. If more than one service/query builder joins the
+same first-level relation and each needs a field from its nested relation, add the nested join in
+every one of them (there is no shared join method to fix once) — or better, add a small shared
+query-builder helper both call, once a third caller needs the same nested join.
+
+**`ApiService`'s base `getFilterQuery` has a real bug: passing more than one key in a `getAll`
+filter object silently corrupts the query.** The compiled base implementation
+(`@flusys/nestjs-shared/fesm/classes/api-service.class.js`) loops every key in the `filter` object
+and calls `query.andWhere(\`${entityName}.${key} = :value\`, { value })` — reusing the **same**
+parameter name `:value` on every iteration. TypeORM binds parameters by name across the whole
+query, so with two or more filter keys only the **last** key's value is actually bound, and it
+silently applies to every earlier `andWhere` clause too — a wrong, over- or under-filtered result
+set with no thrown error, not a query failure. This only bites a service that relies on the
+*unmodified* base `getFilterQuery` (any service with no `getFilterQuery` override of its own,
+including `@flusys/nestjs-auth`'s `UserService` or `@flusys/nestjs-iam`'s `RoleService`/
+`ActionService`) — a service with its own override already writes real, distinctly-named
+parameters and isn't exposed. Never pass more than one key in a `getAll(search, { filter }, user)`
+call against such a service; match on one key via the filter and any remaining condition in memory
+afterward, or add a real `getFilterQuery` override to the target service if you own it.
+
 ## Bulk Operations
 
 ```typescript

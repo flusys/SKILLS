@@ -26,6 +26,15 @@ token lives in an `httpOnly` cookie (`fsn_refresh_token`), and only the token ex
 kept in `localStorage`. `appInitGuard` calls `AuthInitService.initialize()` on app boot to restore
 the session via that cookie.
 
+**Never use `!!authState.company()` as a signal for "is this user a platform-level Super Admin vs.
+a company-scoped viewer."** The seeded Super Admin is provisioned with a real company/branch of its
+own (`seed-admin.ts` assigns one as part of provisioning), so `company()` returns a value for that
+account too — it does not distinguish the two. A component that needs to render a genuinely
+different view for a cross-tenant actor must check an actual permission instead: inject
+`PermissionValidatorService` (`@flusys/ng-shared`) and branch on `hasPermission('<entity>.create')`
+for an entity whose create/update/delete are permission-gated to the platform-level actor only —
+see [security.md](security.md#angular-authorization) for the full pattern.
+
 ## `FileUrlService`
 
 ```typescript

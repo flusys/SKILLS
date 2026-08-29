@@ -16,15 +16,35 @@ Before reviewing, read:
 - `.claude/skills/engineering/references/security.md` — OWASP, multi-tenant isolation
 - `.claude/skills/refactor/SKILL.md`'s "Fix only these" and "FLUSYS patterns worth fixing" tables
 
+If any file you're given is under `dashboard/` (or the project's frontend root) — an `.ts`
+component/service or an inline `template:` — also read:
+
+- `.claude/skills/engineering/references/angular-foundations.md` — session/auth state, the
+  `AuthStateService.company()` super-admin footgun
+- `.claude/skills/ui-design/SKILL.md`'s §5 Anti-patterns — signal/`computed()` misuse, date
+  handling, template-literal backticks, and the `@flusys/ng-ui` component gotchas (`f-table`
+  template slots, `appendTo`, filter-bar width)
+
+Do not skip these for a "just a component" file — most of the real, live-reproduced bugs on this
+kind of project have been frontend ones, not backend ones, and they don't show up in
+`engineering/SKILL.md` or `database.md` at all.
+
 Check every file you're given for:
 
 1. **Bugs** — logic errors, missing null/undefined handling, race conditions
 2. **Security** — injection, missing `@RequirePermission`, `companyId`/`branchId` read from a DTO
-   instead of `@CurrentUser()`, a missing company filter on a company-scoped list/get query, raw
-   SQL
+   instead of `@CurrentUser()`, a missing company filter on a company-scoped list/get query (and
+   specifically: is it in `getSelectQuery`, not only `getExtraManipulateQuery`?), an unscoped FK
+   existence check in a `before*Operation` hook, raw SQL
 3. **Reinvented base-class logic** — hand-written CRUD that `ApiService` / `ApiResourceService`
    already provides
-4. **Dead code and broken FLUSYS patterns** — per the refactor skill's tables
+4. **Frontend-specific** (files under the frontend root only) — `computed()` reading
+   `formControl.value` instead of a `signal()`; `AuthStateService.company()` used as a
+   super-admin/tenant-actor signal instead of a real permission check; a date-only value built via
+   `toISOString().slice(0,10)`; an `f-select`/`f-multiselect`/etc. inside `f-dialog`/`f-drawer`
+   with no `[appendTo]="'body'"`; a local `items`/`isLoading` signal mirroring what
+   `ApiResourceService` already exposes
+5. **Dead code and broken FLUSYS patterns** — per the refactor skill's tables
 
 Do not flag formatting, naming preference, or working-but-not-optimal code — same restraint the
 refactor skill uses. A clean file gets a clean report, not invented nitpicks.

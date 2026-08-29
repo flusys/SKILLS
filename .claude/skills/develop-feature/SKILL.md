@@ -211,7 +211,18 @@ Then: export from the `interfaces/` and `services/` barrels, add this entity's r
 `AppLayout` children in `app.routes.ts` if this is the domain's first feature), merge the entity's
 messages into that routes file's `resolveTranslationModule` fallbacks, and add the menu entry to
 `app-menu.config.ts` **before** the `administrative` group — one entry per domain, not per entity,
-unless the PRD's nav explicitly calls for sub-items.
+unless the PRD's nav explicitly calls for sub-items. If it does, remember a parent item with
+`children` never navigates on its own click — the layout only expands/collapses it — so the
+parent's own `routerLink` must be duplicated onto one child (conventionally the first), or that
+path is unreachable from the sidebar even though the config looks wired up.
+
+When this entity is *not* the one getting the domain's sidebar entry, its list page is otherwise
+unreachable from the UI — add an in-page link for it on the domain's primary list page header, next
+to the title: `<a routerLink="/<path>" class="text-primary hover:underline text-sm">View <entity
+plural></a>` (see `approval-workflow-list.component.ts` or `audit-log-list.component.ts` for the
+working pattern), with `RouterLink` added to that component's `imports` array. Do this in the same
+pass that adds the entity — never defer it, and never leave a comment in `app-menu.config.ts`
+claiming a page is "reachable from there" unless that link actually exists in code.
 
 ### 6. Review
 
@@ -221,14 +232,21 @@ where the PRD's `## Non-Functional` section calls for them; do not cache specula
 
 Two rules are worth restating because violating them is silent rather than loud:
 
-- `companyId` and `branchId` come from `@CurrentUser()`, never from a DTO.
+- `companyId` and `branchId` come from `@CurrentUser()`, never from a DTO — unless the PRD's own
+  entity notes name a platform-level actor managing it cross-tenant, in which case `companyId` is
+  a permission-gated, DTO-supplied create-time field per the PRD.
 - Every list and get query on a company-scoped entity must be filtered by company. Use
   `applyCompanyFilter(query, { isCompanyFeatureEnabled, entityAlias }, user)` from
   `@flusys/nestjs-shared` — a missing filter is a cross-tenant data leak, not a bug report.
 
-This is self-review — you check your own work in the same pass. Before committing, optionally
-delegate to the `code-reviewer` agent for an independent, read-only second pass over the files
-this step touched; it can only report, not fix, which catches what self-review misses.
+This is self-review — you check your own work in the same pass. Before committing, delegate to the
+`code-reviewer` agent for an independent, read-only second pass over the files this step touched;
+it can only report, not fix, which catches what self-review misses. Treat this as **mandatory, not
+optional, whenever this feature was built by a subagent or as part of an unattended batch run**
+(`/bootstrap`'s Step 7) — a build subagent's own "complete" report has shipped a feature with
+`// TODO: Implement` handlers and a disabled-input standing in for a file upload, none of which
+failed a compile check. Read the actual generated files yourself at least once per feature; don't
+rely solely on either the subagent's summary or a green `tsc`/`ng build`.
 
 ### 7. Migrate and verify
 
@@ -250,15 +268,28 @@ Verify, and report honestly on anything that fails:
       fails `ng build`). A build agent self-reporting clean against `tsc --noEmit` has not
       actually verified this — run `ng build` yourself before considering the feature done.
 - [ ] List page loads, paginates, filters, and searches
+- [ ] If `getSelectQuery` has any join, actually click a sortable `createdAt`/`updatedAt` column
+      (not just load the default view) — a joined + paginated query sorted by a `select: false`
+      column (both are, on `Identity`) fails at the DB layer with `column distinctAlias.<alias>_
+      created_at does not exist` unless `getSelectQuery` re-selects it (`api-design/references/
+      crud-generation.md`'s template has the required `addSelect` line already; verify it wasn't
+      dropped). Loading the list with no sort applied does NOT exercise this path — the plain "List
+      page loads" checkbox above passing is not evidence this one also passes
 - [ ] Create and update submit and persist
 - [ ] Delete removes the record from the list
 - [ ] Domain actions return what the PRD specifies, against real seeded data — check actual
       values/math, not just a 200 status
+- [ ] Every new list page is reachable from the UI — either its own sidebar entry, or an in-page
+      `routerLink` from the domain's primary list page if it shares that domain's single menu entry
 - [ ] A user with the permission succeeds and a user without it gets `403` — read
       `references/rbac-live-testing.md` first if this is a live curl test, not a browser session:
       the permission cache needs an explicit warm-up call after every backend restart, and
       provisioning a test user under RBAC has a specific schema shape, both documented there
 - [ ] No browser console errors
+- [ ] For any non-trivial widget the PRD describes with a specific shape (a tree selector, a
+      multi-step wizard, a nested dropdown) — actually exercise that shape, not just confirm it
+      renders. A component built to spec on paper has shipped as a flat list where the PRD asked
+      for a tree, caught only when the user opened the form, not by any compile or lint check.
 
 ## Output
 

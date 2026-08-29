@@ -478,6 +478,15 @@ export class DashboardSummaryResponseDto {
 }
 ```
 
+**Adding a field to an already-shipped domain action's return shape later is a two-file change,
+not one.** Adding a field to the service method's return type/interface is not enough on its own —
+the matching response DTO class above must also declare that field with `@Expose()`, or
+`plainToInstance` silently strips it on the way out. Neither `tsc --noEmit` nor `ng build` catches
+the mismatch, because nothing type-checks a response DTO's field list against the interface it's
+meant to mirror — the frontend just renders `undefined` where the new field should be. Whenever a
+field is added to a domain action's return interface after the fact, grep for its response DTO
+class and add the field there too in the same change.
+
 ### Composable Domain Actions
 
 Only reach for this when Path A's flat controller/service stops fitting — the action is really an

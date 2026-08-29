@@ -352,7 +352,29 @@ If the PRD has a `## Feature Modules (development order)` section, list the feat
 for one confirmation to run them all. On confirm, run the `develop-feature` skill for each file
 in order, skipping its per-feature confirmation since the user approved the batch.
 
-Then summarise: what was stamped (first run only), what was wired, which features were built, and
+**Batch mode raises, not lowers, the bar for verification.** With no per-feature confirmation, the
+user has no natural checkpoint to catch a stub or a regression — self-review and an independent
+`code-reviewer` pass over that feature's changed files (`develop-feature`'s Step 6) are both
+**mandatory** per feature in a batch run, not optional, and must include actually reading the
+generated frontend files rather than trusting a build-subagent's own "complete" report. A build
+subagent has been observed reporting a feature "complete" with basic scaffolding while the actual
+files still had `// TODO: Implement` handlers, empty dropdown option arrays, and a file-upload
+field rendered as a disabled text input — none of that failed a compile check. Before moving to the
+next feature, grep the ones just written for `TODO`, `FIXME`, a handler body that is only a
+`console.log`, or a list/dropdown bound to a literal empty array.
+
+**A systemic bug or new Hard Rule discovered mid-batch applies to every feature already built in
+this batch, not just the ones still ahead.** Fixing it prospectively and moving on has shipped
+real bugs in earlier "verified" features before — a validation-bypass affecting every entity was
+found at feature 11 of 23, after ten earlier features had already been marked verified without it.
+The moment a fix is generalized into a rule (via `rules-writer` or otherwise), stop and check
+whether every already-completed feature in this batch needs the same fix, not only the next one.
+If a full re-sweep isn't practical mid-batch, at minimum list every earlier feature that needs
+re-verification against the new rule in the final summary below, by name — never let it go
+unmentioned on the assumption someone will remember.
+
+Then summarise: what was stamped (first run only), what was wired, which features were built, any
+earlier features flagged above for re-verification against a rule discovered later in the run, and
 the manual follow-ups — translation values, role permissions, and the search-adapter and launcher
 placeholders.
 

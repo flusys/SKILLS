@@ -158,6 +158,29 @@ Rebuild to match the PRD's navigation.
 - Remove items for unselected packages
 - Feature modules added later by `/develop-feature` are inserted **before** the `administrative`
   group
+- **A parent item with `children` never navigates on its own click** — the layout component only
+  expands/collapses it. If the parent's own `routerLink` is a real page (e.g. the `administrative`
+  group's own link to `/administration`, ng-auth's Users/Company/Branch admin page), that page is
+  unreachable from the sidebar unless one child (conventionally the first) repeats the exact same
+  `routerLink`. Every multi-child group must satisfy this — add a same-path child (e.g. a
+  "Configuration" entry under `administrative`) rather than assuming the parent link works by
+  itself.
+- **Every menu item whose target route has a `canActivate: [permissionGuard(...)]` guard needs the
+  matching `permission`/`permissionLogic` on the menu item too — including a vendored package's
+  route with no local `constants` re-export barrel.** Skipping it doesn't make the item safe, it
+  makes it *inconsistent*: every authenticated user sees that sidebar link regardless of role and
+  only discovers they lack access after clicking through to the guarded route, unlike every
+  correctly-configured item which hides itself outright. For a vendored package with no
+  app-authored `constants` barrel, import the permission constant straight from
+  `@flusys/ng-shared` (e.g. `EVENT_PERMISSIONS`, `ROLE_PERMISSIONS`, `EMAIL_TEMPLATE_PERMISSIONS`)
+  rather than leaving the item ungated — grep the package's compiled `fesm2022/*.mjs` for the exact
+  `permissionGuard(...)` action id used on that route if it isn't obvious from the route path.
+- **`IMenuItem.separator` (`@flusys/ng-layout`) renders as a bare divider line only — it has no
+  section-header/caption support in the installed version.** Confirmed by grepping the compiled
+  `flusys-ng-layout.mjs`: `separator` is referenced exactly once, only to skip permission-checking
+  on that item, never to render a `label`. Use `{ separator: true }` freely to visually break a
+  long flat top-level menu into clusters, but don't set a `label` on one expecting a section title
+  to appear — it won't render.
 
 ---
 

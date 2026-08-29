@@ -54,7 +54,7 @@ feature, not a convenience.
 
 | Agent | Tools | Model | Job |
 | ----- | ----- | ----- | --- |
-| `code-reviewer` | `Read, Grep, Glob` (no Edit/Write) | `haiku` | Independent pass over changed files for bugs, security, reinvented base-class logic, and dead FLUSYS patterns. Reports `file:line — issue — fix`, grouped by severity, with a one-line verdict. Cannot self-fix by design — the requesting session decides what to apply |
+| `code-reviewer` | `Read, Grep, Glob` (no Edit/Write) | `haiku` | Independent pass over changed files — backend and frontend both — for bugs, security, reinvented base-class logic, dead FLUSYS patterns, and (for anything under the frontend root) the Angular/`ng-ui` gotcha catalog in `angular-foundations.md`/`ui-design.md`'s Anti-patterns. Reports `file:line — issue — fix`, grouped by severity, with a one-line verdict. Cannot self-fix by design — the requesting session decides what to apply |
 
 **When to reach for a new agent vs. a skill:** if the task both finds problems *and* fixes them,
 it's a skill (or part of one) — `refactor` fixes inline because there's no value in separating
@@ -81,7 +81,7 @@ than once despite being written down in prose; prose is a suggestion, a hook is 
 | Hook | Fires on | Enforces |
 | ---- | -------- | -------- |
 | `block-protected-paths.sh` | `PreToolUse` for `Edit\|Write\|MultiEdit` | Denies edits under `node_modules/` or `persistence/migrations/` — the two "never hand-edit" Hard Rules in CLAUDE.md |
-| `check-company-filter.sh` | `PostToolUse` for `Edit\|Write\|MultiEdit` on `services/*.service.ts` | Blocks (with a fix snippet) if a company-scoped entity's service is missing `applyCompanyFilter` — but only once bootstrap has stamped `Company feature: true` in root CLAUDE.md, and only for a service whose matching `.entity.ts` actually declares `companyId`. Escape hatch: a `// company-filter: exempt — <reason>` comment |
+| `check-company-filter.sh` | `PostToolUse` for `Edit\|Write\|MultiEdit` on `services/*.service.ts` | Blocks (with a fix snippet) if a company-scoped entity's service never calls `applyCompanyFilter` **anywhere**, or calls it only outside `getSelectQuery` (e.g. only in `getExtraManipulateQuery`, which never fires for `getById`/`getByIds`) — the second case is a real, previously-shipped cross-tenant leak that a plain string-presence check misses. Only fires once bootstrap has stamped `Company feature: true` in root CLAUDE.md, and only for a service whose matching `.entity.ts` actually declares `companyId`. Escape hatch: a `// company-filter: exempt — <reason>` comment |
 
 **Authoring convention:** a hook should fire narrowly and explain *why* in its denial/block
 message, including the exact command or pattern to use instead — see both scripts' `jq -n` output.
@@ -104,6 +104,7 @@ opened or edited.
 | `entities.md` | `backend/src/**/*.entity.ts` | A schema change needs `migration:generate` + `migration:run` — TypeORM won't pick it up on its own |
 | `migrations.md` | `backend/src/persistence/migrations/**` | These are generated output; edit the entity and regenerate instead of patching. (Also hook-blocked — this rule explains what to do if you land here anyway) |
 | `tenant-context.md` | `**/controllers/*.controller.ts`, `**/services/*.service.ts` | `companyId`/`branchId` come from `@CurrentUser()`, never a DTO/query/path param — the controller-side half of the Hard Rule that `check-company-filter.sh` enforces mechanically on the service side |
+| `service-ownership.md` | `backend/src/modules/**/services/*.service.ts` | Before touching another entity's table directly (`manager.findOne`/`save`/`getRepository`), check whether it has its own owning service — including across feature/module boundaries — and add a method there instead of reaching around it |
 
 **Rules vs. hooks, concretely:** `tenant-context.md` and `check-company-filter.sh` cover the same
 Hard Rule from two angles — the rule reminds a human-authored controller not to trust a
@@ -154,7 +155,10 @@ collect) is the template.
 5. After the feature lands, you (or the skill) spawn the **agent** `code-reviewer` — isolated,
    read-only, `haiku` — for an independent pass over the changed files before commit.
 6. If review or manual testing surfaces a non-obvious gotcha (e.g. a route-ordering bug), the
-   **skill** `rules-writer` distills it into `docs/CLAUDE.RULES.md` so the next feature skips it.
+   **skill** `rules-writer` distills it into `docs/CLAUDE.RULES.md` so the next feature skips it —
+   and, if the gotcha is really about a `@flusys/*` package or a general pattern rather than this
+   project's own business entities, folds the same lesson directly into the relevant skill file
+   here too, so it survives into the *next* project even though `docs/CLAUDE.RULES.md` won't.
 
 Nothing here needed a `workflow` — that mechanism only enters once you're doing this same shape
 of change across many files at once, e.g. `/refactor` on the whole `modules/` tree.
@@ -178,4 +182,8 @@ Project-specific conventions (this project's DataSource provider name, app slug,
 skills are shared and get overwritten on a kit update; project-specific state has to survive that.
 `docs/CLAUDE.RULES.md` is the other project-specific file: it's *learned* corrections
 (`rules-writer`'s output), one project at a time, distinct from this guide's job of documenting
-the *mechanisms* themselves.
+the *mechanisms* themselves. `rules-writer` itself decides, per lesson, whether it's project-only
+(stays in `docs/CLAUDE.RULES.md` alone) or generic enough to also write directly into a skill file
+here — see that skill's own Step 2.5. A skill file citing `docs/CLAUDE.RULES.md` by name as the
+source of a rule is a bug: that file doesn't exist on a fresh clone, so the lesson must live in the
+skill file's own prose, not behind a pointer to a project-local file.

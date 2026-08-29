@@ -63,6 +63,11 @@ it is unused. Before deleting, confirm it is not required by an `implements` cla
 and used elsewhere, and not a public API something outside the repo depends on. For an override,
 check the parent actually dispatches polymorphically rather than calling a hardcoded class name.
 
+Something that looks like an accidental leftover — a stray `.gitignore` entry, a config value that
+looks wrong at a glance — may be a deliberate, already-committed decision instead. Run `git log -p`
+or `git blame` on it before "fixing" it; reverting a real, intentional prior change because it
+looked wrong in isolation is worse than leaving a genuinely dead line alone one extra pass.
+
 Also remove: static properties never read, instance properties assigned but never used,
 constructor parameter modifiers where the value is only forwarded to `super()`, commented-out
 code (git has it), and `console.log`.

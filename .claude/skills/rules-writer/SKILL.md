@@ -50,6 +50,37 @@ compressed instruction a future session should follow:
 Angular list components`, a specific domain module). Use `All` if global.
 - Keep it to 2-4 lines. This is a rule, not documentation.
 
+## Step 2.5: Classify — Generic Kit or Project-Only
+
+Every rule lands in `docs/CLAUDE.RULES.md` (Step 5) — that file is the running incident log for
+*this* project and stays useful even for a lesson that never leaves it. But `docs/CLAUDE.RULES.md`
+does not exist on a fresh clone of the kit, so a lesson that is really about the kit itself must
+also be written directly into the relevant `.claude/skills/**/SKILL.md` or `references/*.md` file,
+in the same pass — not as a follow-up, and not as a pointer back to `docs/CLAUDE.RULES.md` (a skill
+file that says "see docs/CLAUDE.RULES.md for details" is broken on every other project). This was
+missed for real once on this project — a correction is on record demanding `develop-feature/SKILL.md`
+stop citing `docs/CLAUDE.RULES.md` by name and instead carry the lesson's content directly, "kz for
+any new project CLAUDE.RULES not have right."
+
+Ask: **is this true on any FLUSYS project, regardless of this app's own business domain?**
+
+- A `@flusys/*` package's actual behavior (a base-class quirk, a vendored bug, a hook's call order,
+  a component's default prop) — generic.
+- A general NestJS/TypeORM/Angular/TypeScript pattern this codebase happens to have hit first —
+  generic.
+- A fact about *this app's own* custom entities, business rules, or domain workflow (student
+  records, approval chains specific to this school's process, this app's own menu structure) —
+  project-only, `docs/CLAUDE.RULES.md` alone is correct.
+
+If generic, find the file that already owns this topic (grep `.claude/skills` for the closest
+existing section — a query-hook gotcha goes in `api-design/references/crud-generation.md`, a
+TypeORM/service pattern in `engineering/references/database.md`, a component gotcha in
+`ui-design/SKILL.md`, a PRD-authoring gap in `prd-generator/SKILL.md`) and write the distilled rule
+there as real content — a code example or a bolded warning matching that file's existing style —
+not a citation. Run the same duplicate check from Step 3 against that file too before writing.
+Still also add it to `docs/CLAUDE.RULES.md` per Step 5; the two are not exclusive, and the project
+log's version can keep the specific file/module names the generic version had to drop.
+
 ## Step 3: Check for Duplicates/Conflicts — grep first, read small
 
 Grep `docs/CLAUDE.RULES.md` for 2-3 distinctive keywords from the new rule (file/service/entity
@@ -103,16 +134,20 @@ Example:
 
 ## Step 5: Write & Confirm
 
-Write/Edit `docs/CLAUDE.RULES.md` with the new or updated rule.
+Write/Edit `docs/CLAUDE.RULES.md` with the new or updated rule, and — per Step 2.5 — the matching
+`.claude/skills/**` file too if the rule is generic.
 
 - **Manual invocation** — report concisely:
   ```
   Added to docs/CLAUDE.RULES.md under [Section]:
   "<the distilled rule line>"
+  Also folded into .claude/skills/<skill>/<file> (generic — applies to any FLUSYS project).
   ```
-  If it replaced an existing rule: `Updated existing rule under [Section] (was outdated).`
-- **Proactive capture** — fold it into the normal end-of-task summary as one line ("Also captured
-  in docs/CLAUDE.RULES.md: <rule>"), not a separate message.
+  Omit the second line when the rule is project-only. If it replaced an existing rule: `Updated
+  existing rule under [Section] (was outdated).`
+- **Proactive capture** — fold it into the normal end-of-task summary as one line each ("Also
+  captured in docs/CLAUDE.RULES.md: <rule>" / "and in .claude/skills/<skill>/<file>"), not a
+  separate message.
 
 ## Rules
 

@@ -98,6 +98,17 @@ or menu entry of its own, and that its fields must reach all four user surfaces 
 registration, profile, admin user list, admin user create/edit. Do not give it a navigation
 entry in the bootstrap PRD; note instead that the existing user screen gains the fields.
 
+**This is different from an entity that merely needs an *optional* login alongside its own
+independent record and lifecycle** — e.g. a Student or Guardian entity that has its own fields,
+its own list/CRUD, and is not created through registration, but must still be able to log in to a
+portal. That is not a user extension; it's an ordinary domain entity plus one FK: a nullable
+`userId` column pointing at the auth package's user, populated by calling its existing
+create-user/registration flow (with an appropriate role assigned) at the point the PRD says login
+access is granted — never a hand-rolled parallel auth mechanism. State this explicitly in the
+entity's notes (`userId | nullable FK to User | set when portal access is granted, via the
+existing user-creation flow`) whenever a requirement says a business-domain record — not the
+person doing the registering — needs to log in later.
+
 **Spot tenant entities.** When the requirements describe an owning organizational unit that every
 other entity belongs to — school, clinic, store, organization, tenant, client, business — check
 whether it is really the FLUSYS `company` (and, if the PRD also describes a sub-unit under it —
@@ -123,6 +134,33 @@ package that's always installed instead of an optional one. When the mapping fit
   it's also the pattern `@flusys/*` packages use internally for their own company-scoped data
   (`email-config-with-company`, `notification-with-company`, `task-board-with-company`,
   `role-with-company`, …), so a satellite entity here isn't a workaround, it's the convention.
+  Before giving a concern its own satellite entity, check whether every field in it is incidental
+  — if none of its fields are ever filtered, sorted, or joined, it isn't a satellite entity at
+  all, it's a few keys in `additionalFields`.
+
+- **Merge same-actor 1:1 satellites.** When two or more satellite entities from the check above
+  are all 1:1 with the same company (each would carry a `unique` index on `companyId`) *and* are
+  managed by the same actor with the same access pattern (e.g. both Super-Admin-only, or both
+  self-service by the tenant's own admin), write them as **one** entity, not several — a separate
+  table only earns its place when it has an independent lifecycle: created at a different time,
+  by a different actor, or optional independently of the others. Do not split a tenant's satellite
+  data by feature-guess (e.g. "classification" vs. "billing") when nothing in the requirements
+  actually requires them to exist independently.
+
+- **Spot cross-tenant management.** When a company-scoped entity's access description says a
+  platform-level actor (Super Admin, or any role that manages *other* companies' data, not just
+  their own) creates or edits it — not merely reads it — flag this explicitly in the entity's
+  notes instead of using the default company-scoping boilerplate line. That boilerplate
+  ("`companyId` always comes from the authenticated user, never a request payload") is true for
+  self-service actors but false here: a platform-level actor's own session usually has no
+  `companyId` at all, so there's nothing for `@CurrentUser()` to supply. State instead:
+  *"`companyId` is an explicit required field on create, chosen by \<the platform-level actor\>
+  from the existing company list — not inferred from the caller. Create/update are
+  permission-gated to \<role\>; \<the tenant's own actor\> may only read this entity."* Add a UI
+  form row for the company picker in the `## UI` → Create/edit form table (`companyId |
+  lazy-loaded dropdown | options from the existing Company list`), same as any other FK dropdown.
+  This is a fact about the feature to record, not an implementation instruction — leave the actual
+  DTO/permission/component mechanics to `develop-feature`.
 - Resolve `enableCompanyFeature` / `databaseMode` from the signal table in Step 1.1 as usual (a
   shared DB across many schools is `single` + `enableCompanyFeature`; a separate DB per school is
   `multi-tenant`; one school with no sub-units is `enableCompanyFeature = false` and the
@@ -264,10 +302,13 @@ One paragraph: what this does, who uses it, why it exists.
 list them.
 
 <if enableCompanyFeature> `companyId` (and `branchId`, if branches apply) is present on this
-entity and always comes from the authenticated user, never from a request payload. If the
-requirements referred to this as `<tenant>_id` / `<subunit>_id` (e.g. `school_id`, `campus_id`),
-that is this same field under the domain name from the bootstrap PRD's Tenant Mapping — do not
-list it again as a separate field.
+entity. <if self-service> It always comes from the authenticated user, never a request payload.
+<if cross-tenant management — see "Spot cross-tenant management"> It is an explicit required
+field on create, chosen from the company list by `<actor>`; state which permission gates
+create/update and that the tenant's own actor is read-only. If the requirements referred to this
+as `<tenant>_id` / `<subunit>_id` (e.g. `school_id`, `campus_id`), that is this same field under
+the domain name from the bootstrap PRD's Tenant Mapping — do not list it again as a separate
+field.
 
 **Enums:**
 
@@ -303,6 +344,32 @@ For Domain Actions, describe each one:
 | <actionName> | <what it accepts> | single record \| list \| message only | `<feature>.<action>` |
 
 Permission keys are lowercase dot.case, prefixed with the feature name.
+
+<if this module's entity has a status/stage field driving approval, review, or multi-step routing>
+## State Machine
+
+Required whenever an entity's lifecycle is more than a flat status enum with no real transition
+logic — an approval chain, a reject-and-resubmit flow, a multi-step routing sequence. A thin PRD
+here is the single most expensive kind of gap to leave: it gets discovered only once the module is
+already built, and re-deriving the real rules live (reject-with-resubmit semantics, whether a
+resubmission needs every prior approval again or only from the rejected step forward, what a
+"previous approval still valid" case means) has cost a full module rebuild before. Spell out, don't
+gesture at:
+
+- **States:** every distinct value the status field can hold.
+- **Transitions:** `<from state> --<action, by whom>--> <to state>`, for every edge — including the
+  ones that feel like edge cases (reject, resubmit, cancel, escalate, timeout).
+- **On reject:** does it return to the original submitter for edits, or terminate? Can it be
+  resubmitted, and if so does resubmission restart the whole chain or resume from the rejected
+  step? Give a concrete worked example with a real number of steps (e.g. "a 5-step chain rejected
+  at step 3, resubmitted, resumes at step 3 — steps 1-2's approvals still stand").
+- **Parallel vs. sequential:** can two steps be approved in either order, or must step N wait for
+  N-1?
+
+Write this from a concrete example the requirements actually describe (a specific leave-request or
+purchase-order scenario), not an abstract state-diagram description — the concrete example is what
+surfaces the resubmission-semantics question before a `develop-feature` run has to guess.
+</if>
 
 ## Validation
 
@@ -376,6 +443,17 @@ Verify and fix before printing the summary:
       `branchId` — that CRUD is already shipped by `nestjs-auth`/`ng-auth`
 - [ ] No entity's field list repeats a `<tenant>_id` / `<subunit>_id` FK already covered by the
       bootstrap PRD's Tenant Mapping
+- [ ] No two 1:1-with-company satellite entities share the same managing actor and access
+      pattern without a stated reason they can't be one entity (see "Merge same-actor 1:1
+      satellites")
+- [ ] No company-scoped entity's field list is 100% incidental (never filtered/sorted/joined) —
+      such fields belong in `additionalFields`, not a table
+- [ ] Every entity whose access description names a cross-tenant/platform-level manager states an
+      explicit `companyId` create-time field and its gating permission, not the default
+      `@CurrentUser()` boilerplate line
+- [ ] Any entity with an approval/review/multi-step routing status field has a `## State Machine`
+      section with concrete transitions and a worked reject/resubmit example — not just a status
+      enum
 - [ ] Development order matches the dependency declarations in the feature PRDs
 - [ ] Permission keys are unique across modules and all use `<feature>.<action>` dot.case
 - [ ] No PRD contains implementation detail (imports, decorators, module order, file paths)
@@ -419,8 +497,11 @@ Run in this order:
   is `multi-tenant`. Multiple companies in one shared database is `single` +
   `enableCompanyFeature`. The phrase "multi-tenant SaaS" alone decides nothing — read which one
   is meant.
-- **`companyId` always comes from the authenticated user**, never a request payload. State this
-  on every company-scoped entity.
+- **`companyId` always comes from the authenticated user**, never a request payload — unless the
+  entity's own access description names a platform-level actor that manages it across companies
+  (see "Spot cross-tenant management"), in which case state explicitly that `companyId` is a
+  required create-time field chosen by that actor, gated by a permission only they hold. State
+  which of the two applies on every company-scoped entity.
 - **A domain's own tenant noun is `companyId`/`branchId`, not a custom entity.** If the
   requirements' owning organizational unit (school, clinic, org, …) and its sub-unit (campus,
   branch, …) match FLUSYS's company/branch scoping, map them there instead of writing a feature
