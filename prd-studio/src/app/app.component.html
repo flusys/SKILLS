@@ -1,0 +1,64 @@
+<f-toast />
+<f-confirmdialog />
+
+<div class="app-shell">
+  <nav class="app-sidebar">
+    <button
+      type="button"
+      class="tab-btn"
+      [class.tab-btn--active]="store.activeTab().kind === 'bootstrap'"
+      (click)="store.setActiveTab({ kind: 'bootstrap' })"
+    >
+      Bootstrap
+    </button>
+
+    <div class="sidebar-label">Modules</div>
+
+    @for (f of store.draft().features; track f.slug) {
+      <div class="module-row">
+        <button
+          type="button"
+          class="tab-btn"
+          [class.tab-btn--active]="isActiveFeatureTab(f.slug)"
+          (click)="store.setActiveTab({ kind: 'feature', slug: f.slug })"
+        >
+          {{ f.name || f.slug }}
+        </button>
+        <f-button icon="x" [text]="true" severity="secondary" size="small" fTooltip="Remove module" (onClick)="removeModule(f.slug, f.name)" />
+      </div>
+    }
+
+    <f-button label="Add module" icon="plus" [text]="true" severity="secondary" styleClass="mt-2" (onClick)="store.addFeatureModule()" />
+  </nav>
+
+  <main class="app-main">
+    <div class="top-bar">
+      <input
+        type="text"
+        fInputText
+        fluid
+        placeholder="Target project directory (absolute path)"
+        [ngModel]="store.targetDir()"
+        (ngModelChange)="store.targetDir.set($event)"
+        class="target-dir-input"
+      />
+      <f-button label="Import from docs/" icon="download" severity="secondary" [outlined]="true" (onClick)="onImport()" />
+      <f-button label="Export to docs/" icon="upload" (onClick)="onExport()" />
+      @if (store.status()) {
+        <span class="status-text">{{ store.status() }}</span>
+      }
+    </div>
+
+    <div class="content">
+      @if (store.activeTab().kind === 'bootstrap') {
+        <app-bootstrap-panel />
+      } @else if (activeFeature(); as feature) {
+        <app-feature-panel [feature]="feature" />
+      }
+    </div>
+  </main>
+
+  <aside class="app-lint-sidebar">
+    <app-lint-panel [issues]="store.lintIssues()" />
+  </aside>
+</div>

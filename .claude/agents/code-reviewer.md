@@ -41,8 +41,10 @@ Check every file you're given for:
 4. **Frontend-specific** (files under the frontend root only) — `computed()` reading
    `formControl.value` instead of a `signal()`; `AuthStateService.company()` used as a
    super-admin/tenant-actor signal instead of a real permission check; a date-only value built via
-   `toISOString().slice(0,10)`; an `f-select`/`f-multiselect`/etc. inside `f-dialog`/`f-drawer`
-   with no `[appendTo]="'body'"`; a local `items`/`isLoading` signal mirroring what
+   `toISOString().slice(0,10)`; an `f-select`/`f-multiselect`/`f-autocomplete`/`f-treeselect`/
+   `f-cascadeselect`/`f-menu`/`f-password` inside `f-dialog`/`f-drawer`, a `<table>`/`f-table` row,
+   or any other scrollable/`overflow:hidden` container, with no `[appendTo]="'body'"` — a table row
+   clips these exactly like a dialog does, not just dialogs; a local `items`/`isLoading` signal mirroring what
    `ApiResourceService` already exposes
 5. **Dead code and broken FLUSYS patterns** — per the refactor skill's tables
 

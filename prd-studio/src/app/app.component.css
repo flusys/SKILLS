@@ -1,0 +1,169 @@
+:host {
+  display: block;
+  height: 100vh;
+}
+
+.app-shell {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 220px 1fr 320px;
+  grid-template-areas: "sidebar main lint";
+  background: var(--f-surface-100, var(--f-content-background));
+}
+
+.app-sidebar {
+  grid-area: sidebar;
+  background: var(--f-content-background);
+  border-right: 1px solid var(--f-content-border-color);
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-label {
+  margin-top: 14px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--f-text-muted-color);
+  padding: 0 4px;
+}
+
+.module-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.module-row .tab-btn {
+  flex: 1;
+}
+
+.tab-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--p-content-border-radius, 8px);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-color);
+  transition: background-color 0.12s ease;
+}
+.tab-btn:hover {
+  background: var(--surface-hover, var(--f-surface-100));
+}
+.tab-btn--active {
+  background: var(--color-primary);
+  color: var(--f-primary-contrast-color);
+}
+.tab-btn--active:hover {
+  background: var(--color-primary);
+}
+
+.app-main {
+  grid-area: main;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: var(--f-content-background);
+  border-bottom: 1px solid var(--f-content-border-color);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.target-dir-input {
+  flex: 1;
+  min-width: 160px;
+}
+.status-text {
+  color: var(--f-text-muted-color);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.content {
+  padding: 20px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.app-lint-sidebar {
+  grid-area: lint;
+  background: var(--f-content-background);
+  border-left: 1px solid var(--f-content-border-color);
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Tablet: lint panel drops below, sidebar stays a narrow left rail. */
+@media (max-width: 1180px) {
+  .app-shell {
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "sidebar main"
+      "lint lint";
+  }
+  .app-lint-sidebar {
+    border-left: none;
+    border-top: 1px solid var(--f-content-border-color);
+    max-height: 280px;
+  }
+}
+
+/* Mobile: everything stacks; the sidebar becomes a horizontal scroll strip. */
+@media (max-width: 760px) {
+  :host {
+    height: auto;
+    min-height: 100vh;
+  }
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+  .app-sidebar {
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--f-content-border-color);
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .sidebar-label {
+    margin: 0;
+    white-space: nowrap;
+  }
+  .module-row {
+    flex: 0 0 auto;
+  }
+  .tab-btn {
+    width: auto;
+    white-space: nowrap;
+  }
+  .top-bar {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+  }
+  .content {
+    padding: 14px;
+  }
+  .app-lint-sidebar {
+    max-height: none;
+  }
+}

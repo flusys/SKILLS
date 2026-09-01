@@ -1158,6 +1158,15 @@ options, not a crash, so it's easy to ship without noticing in a quick manual ch
 When unsure which way a given component defaults, grep its `appendTo = input(` line in
 `node_modules/@flusys/ng-ui/fesm2022/flusys-ng-ui.mjs` rather than assuming.
 
+**The same rule applies inside `<f-table>` rows, not just dialogs.** If a list page ever needs an
+inline-edit cell or a row-actions dropdown — an `f-select` in a `<td>` for quick status changes, an
+`f-menu` behind a "⋯" button instead of the two plain icon buttons the base template above uses —
+that component also needs `[appendTo]="'body'"`. A table row is exactly as clipping an ancestor as
+a dialog body: the row/table wrapper doesn't usually declare `overflow:hidden` itself, but
+`f-table`'s scrollable/virtual-scroll mode does, and even without it the dropdown panel can render
+underneath sibling rows or get cut by a scrolling page section. Default to `[appendTo]="'body'"`
+on any such component the moment it goes into a table cell — don't wait to see it clip first.
+
 **Component rules:**
 - All DI via `inject()` — no constructor parameter injection
 - `computed()` for derived booleans like `isEditMode`

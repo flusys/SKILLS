@@ -1,0 +1,50 @@
+{
+  "name": "prd-studio",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Visual PRD builder — an Angular app (using @flusys/ng-ui) over a small Express API that reads/writes docs/prd-*.md files for /bootstrap and /develop-feature to consume.",
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm:api\" \"npm:start\"",
+    "start": "ng serve --port 5173",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "api": "tsx watch server/api/index.ts",
+    "server:typecheck": "tsc -p server/tsconfig.json --noEmit",
+    "server:build": "tsc -p server/tsconfig.json",
+    "render:example": "tsx server/examples/render-example.ts",
+    "roundtrip:test": "tsx server/examples/roundtrip-test.ts",
+    "e2e": "node e2e/e2e-smoke.mjs",
+    "e2e:import": "node e2e/e2e-import.mjs",
+    "e2e:export": "node e2e/e2e-export.mjs",
+    "e2e:responsive": "node e2e/e2e-responsive.mjs",
+    "e2e:target-dir": "node e2e/e2e-target-dir-persist.mjs",
+    "e2e:rename": "node e2e/e2e-rename-module.mjs"
+  },
+  "dependencies": {
+    "@angular/common": "^22.0.6",
+    "@angular/compiler": "^22.0.6",
+    "@angular/core": "^22.0.6",
+    "@angular/forms": "^22.0.6",
+    "@angular/platform-browser": "^22.0.6",
+    "@flusys/ng-core": "^6.3.0",
+    "@flusys/ng-ui": "^6.3.0",
+    "chart.js": "^4.5.1",
+    "express": "^4.21.1",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.8.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.0.6",
+    "@angular/cli": "^22.0.6",
+    "@angular/compiler-cli": "^22.0.6",
+    "@tailwindcss/postcss": "^4.1.12",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.9.0",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.4",
+    "playwright": "^1.62.1",
+    "tsx": "^4.19.2",
+    "typescript": "~6.0.3"
+  }
+}

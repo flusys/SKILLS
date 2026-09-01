@@ -287,8 +287,13 @@ One paragraph: what this does, who uses it, why it exists.
 ## API Strategy
 
 - **Strategy:** Full CRUD | Partial CRUD | Domain Action
-- <if Partial CRUD> Operations needed: insert, getAll, getById, update
-- <if Domain Action> Actions: <list each, and what it does>
+- <if Partial CRUD> Operations needed: <pick from the ten base operations — insert, insertMany,
+  getById, getByIds, getAll, getByFilter, bulkUpsert, update, updateMany, delete>
+- <if this module has any domain-specific actions beyond entity lifecycle> Action `<name>`: <what
+  it does> — one bullet per action. Not exclusive with Full/Partial CRUD: a CRUD entity routinely
+  gets extra actions (`approve`, `send`, `void`) bolted onto the same controller alongside its base
+  operations (see the `// Custom endpoints go here` slot in api-design's controller template).
+  Required, with no CRUD entity lifecycle at all, only when the strategy itself is Domain Action.
 
 ## Entities
 
@@ -327,6 +332,10 @@ field.
 
 ## Endpoints
 
+The two tables below are independent, not either/or — include whichever apply. A Full or Partial
+CRUD entity commonly has both: its base operations, plus extra domain action endpoints layered on
+the same controller. Omit a table entirely if this module has none of that kind.
+
 For Full or Partial CRUD, list only the operations needed — the controller factory provides them:
 
 | Operation | Permission |
@@ -337,7 +346,8 @@ For Full or Partial CRUD, list only the operations needed — the controller fac
 | update | `<feature>.update` |
 | delete | `<feature>.delete` |
 
-For Domain Actions, describe each one:
+For Domain Actions — every custom action beyond the base operations, whether this module is pure
+Domain Action or a CRUD entity with extras bolted on — describe each one:
 
 | Action | Input | Returns | Permission |
 | ------ | ----- | ------- | ---------- |

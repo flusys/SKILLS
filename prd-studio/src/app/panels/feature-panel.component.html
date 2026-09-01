@@ -1,0 +1,480 @@
+<div class="flex flex-col gap-4">
+  <f-card header="Module">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Name</label>
+        <input type="text" fInputText fluid [ngModel]="feature().name" (ngModelChange)="onNameChange($event)" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Slug (used in the filename)</label>
+        <input type="text" fInputText fluid [ngModel]="feature().slug" (ngModelChange)="onSlugChange($event)" />
+        <span class="text-xs text-muted-color">docs/prd-feature-{{ feature().order.toString().padStart(2, '0') }}-{{ feature().slug }}.md</span>
+      </div>
+    </div>
+  </f-card>
+
+  <f-card header="Purpose">
+    <textarea fTextarea fluid rows="3" [(ngModel)]="feature().purpose" (ngModelChange)="store.touch()"></textarea>
+    <span class="text-xs text-muted-color">What this does, who uses it, why it exists.</span>
+  </f-card>
+
+  <f-card header="API Strategy">
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-1 max-w-xs">
+        <label class="text-xs text-muted-color">Strategy</label>
+        <f-select fluid [appendTo]="'body'" [options]="apiStrategyOptions" [ngModel]="feature().apiStrategy.strategy" (ngModelChange)="onStrategyChange($event)" />
+      </div>
+
+      @if (feature().apiStrategy.strategy === 'Partial CRUD') {
+        <div class="flex flex-wrap gap-4">
+          @for (op of crudOperationOptions; track op) {
+            <label class="flex items-center gap-1.5 text-sm">
+              <f-checkbox [binary]="true" [ngModel]="isPartialOperationChecked(op)" (ngModelChange)="togglePartialOperation(op, $event)" />
+              {{ op }}
+            </label>
+          }
+        </div>
+      }
+
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">
+          Domain Actions
+          @if (feature().apiStrategy.strategy !== 'Domain Action') {
+            (optional — bolted onto the CRUD controller alongside base operations)
+          }
+        </label>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-muted-color border-b border-surface">
+                <th class="py-1.5 pr-2 font-medium">Action</th>
+                <th class="py-1.5 pr-2 font-medium">What it does</th>
+                <th class="py-1.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of feature().apiStrategy.domainActions; track $index) {
+                <tr class="border-b border-surface last:border-0">
+                  <td class="py-1.5 pr-2 min-w-28"><input type="text" fInputText fluid [(ngModel)]="a.name" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-48"><input type="text" fInputText fluid [(ngModel)]="a.description" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeDomainAction($index)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addDomainAction()" />
+      </div>
+    </div>
+  </f-card>
+
+  <div>
+    <h3 class="text-sm font-semibold text-color mb-2 flex items-center justify-between">
+      Entities
+      <f-button label="Add entity" icon="plus" [text]="true" severity="secondary" size="small" (onClick)="addEntity()" />
+    </h3>
+    <div class="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 items-start">
+      <app-canvas [feature]="feature()" [selected]="selectedEntity()?.name" (selectEntity)="onSelectEntity($event)" />
+      <div class="rounded-lg border border-surface bg-[var(--f-content-background)] p-4 max-h-[68vh] overflow-y-auto">
+        @if (selectedEntity(); as entity) {
+          <app-entity-inspector [feature]="feature()" [entity]="entity" />
+        } @else {
+          <p class="text-sm text-muted-color">Select an entity to edit its fields, or add one.</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <f-card header="Endpoints">
+    <div class="flex flex-col gap-4">
+      @if (feature().apiStrategy.strategy !== 'Domain Action') {
+        <div>
+          <label class="text-xs text-muted-color">CRUD Operations</label>
+          <div class="overflow-x-auto mt-1">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs text-muted-color border-b border-surface">
+                  <th class="py-1.5 pr-2 font-medium">Operation</th>
+                  <th class="py-1.5 pr-2 font-medium">Permission</th>
+                  <th class="py-1.5 w-8"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of crudEndpoints; track $index) {
+                  <tr class="border-b border-surface last:border-0">
+                    <td class="py-1.5 pr-2 min-w-32"><f-select fluid [appendTo]="'body'" [options]="crudOperationOptions" [(ngModel)]="e.operation" (ngModelChange)="store.touch()" /></td>
+                    <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="e.permission" (ngModelChange)="store.touch()" /></td>
+                    <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeCrudEndpoint($index)" /></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addCrudEndpoint()" />
+        </div>
+      }
+
+      <div>
+        <label class="text-xs text-muted-color">
+          Domain Action Endpoints
+          @if (feature().apiStrategy.strategy !== 'Domain Action') {
+            (optional, on top of the CRUD endpoints above)
+          }
+        </label>
+        <div class="overflow-x-auto mt-1">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-muted-color border-b border-surface">
+                <th class="py-1.5 pr-2 font-medium">Action</th>
+                <th class="py-1.5 pr-2 font-medium">Input</th>
+                <th class="py-1.5 pr-2 font-medium">Returns</th>
+                <th class="py-1.5 pr-2 font-medium">Permission</th>
+                <th class="py-1.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of domainActionEndpoints; track $index) {
+                <tr class="border-b border-surface last:border-0">
+                  <td class="py-1.5 pr-2 min-w-24"><input type="text" fInputText fluid [(ngModel)]="e.action" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="e.input" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-36"><f-select fluid [appendTo]="'body'" [options]="returnsOptions" [(ngModel)]="e.returns" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="e.permission" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeDomainActionEndpoint($index)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addDomainActionEndpoint()" />
+      </div>
+    </div>
+  </f-card>
+
+  <f-card header="State Machine">
+    <label class="flex items-center gap-2 text-sm mb-3">
+      <f-checkbox [binary]="true" [ngModel]="!!feature().stateMachine" (ngModelChange)="toggleStateMachine($event)" />
+      Has a workflow beyond a flat status enum
+    </label>
+    @if (feature().stateMachine; as sm) {
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">States (comma-separated)</label>
+          <input type="text" fInputText fluid placeholder="DRAFT, SENT, PAID" [ngModel]="sm.states.join(', ')" (ngModelChange)="onStatesChange($event)" />
+        </div>
+        <div>
+          <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Transitions</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs text-muted-color border-b border-surface">
+                  <th class="py-1.5 pr-2 font-medium">From</th>
+                  <th class="py-1.5 pr-2 font-medium">Action</th>
+                  <th class="py-1.5 pr-2 font-medium">By (actor)</th>
+                  <th class="py-1.5 pr-2 font-medium">To</th>
+                  <th class="py-1.5 w-8"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (t of sm.transitions; track $index) {
+                  <tr class="border-b border-surface last:border-0">
+                    <td class="py-1.5 pr-2 min-w-20"><input type="text" fInputText fluid [(ngModel)]="t.from" (ngModelChange)="store.touch()" /></td>
+                    <td class="py-1.5 pr-2 min-w-24"><input type="text" fInputText fluid [(ngModel)]="t.action" (ngModelChange)="store.touch()" /></td>
+                    <td class="py-1.5 pr-2 min-w-24"><input type="text" fInputText fluid [(ngModel)]="t.by" (ngModelChange)="store.touch()" /></td>
+                    <td class="py-1.5 pr-2 min-w-20"><input type="text" fInputText fluid [(ngModel)]="t.to" (ngModelChange)="store.touch()" /></td>
+                    <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeTransition($index)" /></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addTransition()" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">On reject</label>
+          <textarea fTextarea fluid rows="2" placeholder="return-to-submitter vs terminate; resubmit semantics" [(ngModel)]="sm.onReject" (ngModelChange)="store.touch()"></textarea>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">Parallel vs. sequential</label>
+          <input type="text" fInputText fluid [(ngModel)]="sm.parallelVsSequential" (ngModelChange)="store.touch()" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">Worked example</label>
+          <textarea fTextarea fluid rows="3" placeholder="a concrete scenario with real step numbers" [(ngModel)]="sm.workedExample" (ngModelChange)="store.touch()"></textarea>
+        </div>
+      </div>
+    } @else {
+      <p class="text-xs text-muted-color">Enable for an approval chain, reject/resubmit flow, or multi-step routing.</p>
+    }
+  </f-card>
+
+  <f-card header="Validation">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium">Field</th>
+            <th class="py-1.5 pr-2 font-medium">Rule</th>
+            <th class="py-1.5 w-8"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of feature().validation; track $index) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2 min-w-28"><input type="text" fInputText fluid [(ngModel)]="v.field" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-48"><input type="text" fInputText fluid [(ngModel)]="v.rule" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeValidationRule($index)" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addValidationRule()" />
+  </f-card>
+
+  <f-card header="Response Fields">
+    <p class="text-xs text-muted-color mb-2">Every field on every entity must be classified — the linter flags any that aren't.</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium">Field</th>
+            <th class="py-1.5 pr-2 font-medium">Classification</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (fk of allFieldKeys(); track fk.field) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2">{{ fk.entity }}.{{ fk.field }}</td>
+              <td class="py-1.5 pr-2 min-w-36">
+                <f-select fluid [appendTo]="'body'" [options]="['unclassified', 'exposed', 'never-exposed']" [ngModel]="classificationOf(fk.field)" (ngModelChange)="setClassification(fk.field, $event)" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </f-card>
+
+  <f-card header="UI — List page">
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-1 max-w-xs">
+        <label class="text-xs text-muted-color">Route</label>
+        <input type="text" fInputText fluid [(ngModel)]="feature().ui.listPage.route" (ngModelChange)="store.touch()" />
+      </div>
+
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Columns</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-muted-color border-b border-surface">
+                <th class="py-1.5 pr-2 font-medium">Field</th>
+                <th class="py-1.5 pr-2 font-medium">Sortable</th>
+                <th class="py-1.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of feature().ui.listPage.columns; track $index) {
+                <tr class="border-b border-surface last:border-0">
+                  <td class="py-1.5 pr-2 min-w-28"><input type="text" fInputText fluid [(ngModel)]="c.field" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2"><f-checkbox [binary]="true" [(ngModel)]="c.sortable" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeColumn($index)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addColumn()" />
+      </div>
+
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Filters</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-muted-color border-b border-surface">
+                <th class="py-1.5 pr-2 font-medium">Field</th>
+                <th class="py-1.5 pr-2 font-medium">Input</th>
+                <th class="py-1.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of feature().ui.listPage.filters; track $index) {
+                <tr class="border-b border-surface last:border-0">
+                  <td class="py-1.5 pr-2 min-w-28"><input type="text" fInputText fluid [(ngModel)]="f.field" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-32"><f-select fluid [appendTo]="'body'" [options]="filterInputOptions" [(ngModel)]="f.inputType" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeFilter($index)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addFilter()" />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Row actions (comma-separated)</label>
+        <input type="text" fInputText fluid [ngModel]="feature().ui.listPage.rowActions.join(', ')" (ngModelChange)="onRowActionsChange($event)" />
+      </div>
+
+      <label class="flex items-center gap-2 text-sm">
+        <f-checkbox [binary]="true" [(ngModel)]="feature().ui.listPage.search.enabled" (ngModelChange)="store.touch()" />
+        Search enabled
+      </label>
+      @if (feature().ui.listPage.search.enabled) {
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">Search fields (comma-separated)</label>
+          <input type="text" fInputText fluid [ngModel]="feature().ui.listPage.search.fields.join(', ')" (ngModelChange)="onSearchFieldsChange($event)" />
+        </div>
+      }
+
+      <div class="flex flex-col gap-1 max-w-xs">
+        <label class="text-xs text-muted-color">Page size</label>
+        <f-inputnumber [useGrouping]="false" [(ngModel)]="feature().ui.listPage.pageSize" (ngModelChange)="store.touch()" />
+      </div>
+
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Create / edit form</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-muted-color border-b border-surface">
+                <th class="py-1.5 pr-2 font-medium">Field</th>
+                <th class="py-1.5 pr-2 font-medium">Input</th>
+                <th class="py-1.5 pr-2 font-medium">Notes</th>
+                <th class="py-1.5 pr-2 font-medium">Options from (FK dropdowns)</th>
+                <th class="py-1.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of feature().ui.createEditForm; track $index) {
+                <tr class="border-b border-surface last:border-0">
+                  <td class="py-1.5 pr-2 min-w-24"><input type="text" fInputText fluid [(ngModel)]="f.field" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-28"><f-select fluid [appendTo]="'body'" [options]="inputTypeOptions" [(ngModel)]="f.input" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="f.notes" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="f.optionsFrom" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeFormField($index)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addFormField()" />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Behaviour notes (comma-separated)</label>
+        <input type="text" fInputText fluid placeholder="status colours, nested tables, confirmation dialogs, …" [ngModel]="feature().ui.behaviour.join(', ')" (ngModelChange)="onBehaviourChange($event)" />
+      </div>
+    </div>
+  </f-card>
+
+  <f-card header="Localization">
+    <label class="flex items-center gap-2 text-sm">
+      <f-checkbox [binary]="true" [(ngModel)]="feature().localization.translatedContentRequired" (ngModelChange)="store.touch()" />
+      Translated content required
+    </label>
+    @if (feature().localization.translatedContentRequired) {
+      <div class="flex flex-col gap-1 mt-3 max-w-xs">
+        <label class="text-xs text-muted-color">Key prefix</label>
+        <input type="text" fInputText fluid [(ngModel)]="feature().localization.keyPrefix" (ngModelChange)="store.touch()" />
+      </div>
+    }
+  </f-card>
+
+  <f-card header="Non-Functional">
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-1 max-w-xs">
+        <label class="text-xs text-muted-color">Expected volume</label>
+        <f-select fluid [appendTo]="'body'" [options]="volumeOptions" [(ngModel)]="feature().nonFunctional.expectedVolume" (ngModelChange)="store.touch()" />
+      </div>
+      <label class="flex items-center gap-2 text-sm">
+        <f-checkbox [binary]="true" [(ngModel)]="feature().nonFunctional.listReadHeavy" (ngModelChange)="store.touch()" />
+        List endpoint read-heavy
+      </label>
+      @if (feature().nonFunctional.listReadHeavy) {
+        <div class="flex flex-col gap-1 max-w-xs">
+          <label class="text-xs text-muted-color">Cache TTL (seconds)</label>
+          <f-inputnumber [useGrouping]="false" [ngModel]="feature().nonFunctional.cacheTtlSeconds ?? 30" (ngModelChange)="feature().nonFunctional.cacheTtlSeconds = $event; store.touch()" />
+        </div>
+      }
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Known expensive joins / N+1 risks</label>
+        <input type="text" fInputText fluid [(ngModel)]="feature().nonFunctional.expensiveJoinsOrN1Risks" (ngModelChange)="store.touch()" />
+      </div>
+      <label class="flex items-center gap-2 text-sm">
+        <f-checkbox [binary]="true" [(ngModel)]="feature().nonFunctional.softDelete" (ngModelChange)="store.touch()" />
+        Soft delete
+      </label>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Audit log on (comma-separated actions)</label>
+        <input type="text" fInputText fluid [ngModel]="feature().nonFunctional.auditLogOn.join(', ')" (ngModelChange)="addAuditAction($event)" />
+      </div>
+
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Notifications triggered</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-muted-color border-b border-surface">
+                <th class="py-1.5 pr-2 font-medium">When</th>
+                <th class="py-1.5 pr-2 font-medium">To</th>
+                <th class="py-1.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (n of feature().nonFunctional.notificationsTriggered; track $index) {
+                <tr class="border-b border-surface last:border-0">
+                  <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="n.when" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="n.to" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeNotification($index)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addNotification()" />
+      </div>
+
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">File attachments</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-muted-color border-b border-surface">
+                <th class="py-1.5 pr-2 font-medium">Field</th>
+                <th class="py-1.5 pr-2 font-medium">Allowed types (comma)</th>
+                <th class="py-1.5 pr-2 font-medium">Max size (MB)</th>
+                <th class="py-1.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (fa of feature().nonFunctional.fileAttachments; track $index) {
+                <tr class="border-b border-surface last:border-0">
+                  <td class="py-1.5 pr-2 min-w-24"><input type="text" fInputText fluid [(ngModel)]="fa.field" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [ngModel]="fa.allowedTypes.join(', ')" (ngModelChange)="onAllowedTypesChange($index, $event)" /></td>
+                  <td class="py-1.5 pr-2 min-w-20"><f-inputnumber [useGrouping]="false" [(ngModel)]="fa.maxSizeMb" (ngModelChange)="store.touch()" /></td>
+                  <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeFileAttachment($index)" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addFileAttachment()" />
+      </div>
+    </div>
+  </f-card>
+
+  <f-card header="Dependencies">
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Depends on (module slugs, comma-separated)</label>
+        <input type="text" fInputText fluid [ngModel]="feature().dependencies.dependsOn.join(', ')" (ngModelChange)="onDependsOnChange($event)" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Required before (module slugs, comma-separated)</label>
+        <input type="text" fInputText fluid [ngModel]="feature().dependencies.requiredBefore.join(', ')" (ngModelChange)="onRequiredBeforeChange($event)" />
+      </div>
+    </div>
+  </f-card>
+</div>

@@ -1,0 +1,186 @@
+<div class="flex flex-col gap-4">
+  <f-card header="App Identity">
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">App name</label>
+        <input type="text" fInputText fluid [ngModel]="b.appIdentity.appName" (ngModelChange)="onAppNameChange($event)" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Purpose</label>
+        <textarea fTextarea fluid rows="2" [ngModel]="b.appIdentity.purpose" (ngModelChange)="b.appIdentity.purpose = $event; store.touch()"></textarea>
+        <span class="text-xs text-muted-color">One sentence.</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">Backend port</label>
+          <f-inputnumber fluid [useGrouping]="false" [ngModel]="b.appIdentity.backendPort" (ngModelChange)="b.appIdentity.backendPort = $event; store.touch()" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">Frontend port</label>
+          <f-inputnumber fluid [useGrouping]="false" [ngModel]="b.appIdentity.frontendPort" (ngModelChange)="b.appIdentity.frontendPort = $event; store.touch()" />
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Production API URL</label>
+        <input type="text" fInputText fluid placeholder="https://api.example.com or TODO" [ngModel]="b.appIdentity.productionApiUrl" (ngModelChange)="b.appIdentity.productionApiUrl = $event; store.touch()" />
+      </div>
+    </div>
+  </f-card>
+
+  <f-card header="Config Values">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">dbType</label>
+        <f-select fluid [appendTo]="'body'" [options]="dbTypeOptions" [ngModel]="b.configValues.dbType" (ngModelChange)="b.configValues.dbType = $event; store.touch()" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">databaseMode</label>
+        <f-select fluid [appendTo]="'body'" [options]="databaseModeOptions" [ngModel]="b.configValues.databaseMode" (ngModelChange)="b.configValues.databaseMode = $event; store.touch()" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">permissionMode</label>
+        <f-select fluid [appendTo]="'body'" [options]="permissionModeOptions" [ngModel]="b.configValues.permissionMode" (ngModelChange)="b.configValues.permissionMode = $event; store.touch()" />
+      </div>
+      <div class="flex items-center gap-2 pt-5">
+        <f-checkbox [binary]="true" inputId="enableCompanyFeature" [ngModel]="b.configValues.enableCompanyFeature" (ngModelChange)="b.configValues.enableCompanyFeature = $event; store.touch()" />
+        <label for="enableCompanyFeature" class="text-sm">enableCompanyFeature</label>
+      </div>
+      <div class="flex items-center gap-2">
+        <f-checkbox [binary]="true" inputId="enableEmailVerification" [ngModel]="b.configValues.enableEmailVerification" (ngModelChange)="b.configValues.enableEmailVerification = $event; store.touch()" />
+        <label for="enableEmailVerification" class="text-sm">enableEmailVerification</label>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">ADMIN_EMAIL</label>
+        <input type="text" fInputText fluid [ngModel]="b.configValues.adminEmail" (ngModelChange)="b.configValues.adminEmail = $event; store.touch()" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">ADMIN_PASSWORD</label>
+        <input type="text" fInputText fluid [ngModel]="b.configValues.adminPassword" (ngModelChange)="b.configValues.adminPassword = $event; store.touch()" />
+      </div>
+    </div>
+  </f-card>
+
+  <f-card header="Tenant Mapping">
+    <p class="text-xs text-muted-color mb-2">Only needed if the requirements name their own tenant/sub-unit (school, clinic, org, …) that maps to companyId/branchId.</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium">Domain term</th>
+            <th class="py-1.5 pr-2 font-medium">Maps to</th>
+            <th class="py-1.5 pr-2 font-medium">Notes</th>
+            <th class="py-1.5 w-8"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of b.tenantMapping; track $index) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid placeholder="e.g. School" [(ngModel)]="row.domainTerm" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-32"><f-select fluid [appendTo]="'body'" [options]="mapsToOptions" [(ngModel)]="row.mapsTo" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-40"><input type="text" fInputText fluid [(ngModel)]="row.notes" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeTenantMapping($index)" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addTenantMapping()" />
+  </f-card>
+
+  <f-card header="Package Selection">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium">Package</th>
+            <th class="py-1.5 pr-2 font-medium">Selected</th>
+            <th class="py-1.5 pr-2 font-medium">Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of b.packageSelection; track row.package) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2 text-muted-color whitespace-nowrap">nestjs-{{ row.package }} / ng-{{ row.package }}</td>
+              <td class="py-1.5 pr-2"><f-checkbox [binary]="true" [(ngModel)]="row.selected" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-60"><input type="text" fInputText fluid placeholder="the signal that decided this" [(ngModel)]="row.reason" (ngModelChange)="store.touch()" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-muted-color mt-2">Always included regardless: nestjs-core, nestjs-shared, nestjs-auth / ng-core, ng-shared, ng-layout, ng-auth, ng-ui.</p>
+  </f-card>
+
+  <f-card header="Seed Data">
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Roles to seed (comma-separated)</label>
+        <input type="text" fInputText fluid [ngModel]="(b.seedData.roles ?? []).join(', ')" (ngModelChange)="onRolesChange($event)" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Default language</label>
+        <input type="text" fInputText fluid [ngModel]="b.seedData.defaultLanguage ?? ''" (ngModelChange)="b.seedData.defaultLanguage = $event || undefined; store.touch()" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Additional languages (comma-separated)</label>
+        <input type="text" fInputText fluid [ngModel]="(b.seedData.additionalLanguages ?? []).join(', ')" (ngModelChange)="onAdditionalLanguagesChange($event)" />
+      </div>
+    </div>
+  </f-card>
+
+  <f-card header="Navigation Menu">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium">Label</th>
+            <th class="py-1.5 pr-2 font-medium">Icon</th>
+            <th class="py-1.5 pr-2 font-medium">Route</th>
+            <th class="py-1.5 pr-2 font-medium">Links to module</th>
+            <th class="py-1.5 pr-2 font-medium">Always present</th>
+            <th class="py-1.5 pr-2 font-medium">Notes</th>
+            <th class="py-1.5 w-8"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of b.navigationMenu; track $index) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2 min-w-28"><input type="text" fInputText fluid [(ngModel)]="row.label" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid placeholder="layout-dashboard" [(ngModel)]="row.icon" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-28"><input type="text" fInputText fluid placeholder="/invoices" [(ngModel)]="row.route" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-32"><f-select fluid [appendTo]="'body'" [options]="moduleSlugOptions" [(ngModel)]="row.moduleSlug" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2"><f-checkbox [binary]="true" [(ngModel)]="row.alwaysPresent" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="row.notes" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeNavEntry($index)" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addNavEntry()" />
+  </f-card>
+
+  <f-card header="Feature Modules (development order)">
+    <p class="text-xs text-muted-color mb-2">Add/remove modules from the sidebar. Order + dependencies here drive the linter's development-order check.</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium w-20">Order</th>
+            <th class="py-1.5 pr-2 font-medium">File</th>
+            <th class="py-1.5 pr-2 font-medium">Depends on (module slugs)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ref of b.featureModules; track ref.file) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2"><f-inputnumber fluid [useGrouping]="false" [(ngModel)]="ref.order" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 text-muted-color whitespace-nowrap">{{ ref.file }}</td>
+              <td class="py-1.5 pr-2 min-w-40"><input type="text" fInputText fluid placeholder="comma-separated slugs" [ngModel]="ref.dependsOn.join(', ')" (ngModelChange)="onModuleDependsOnChange(ref.order, $event)" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </f-card>
+</div>

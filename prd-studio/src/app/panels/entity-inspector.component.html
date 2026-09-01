@@ -1,0 +1,114 @@
+<div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-1">
+    <label class="text-xs text-muted-color">Entity name</label>
+    <input type="text" fInputText fluid [ngModel]="entity().name" (ngModelChange)="onNameChange($event)" />
+  </div>
+
+  <f-button label="Delete entity" icon="trash-2" severity="danger" [outlined]="true" size="small" styleClass="self-start" (onClick)="deleteEntity()" />
+
+  <div>
+    <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Fields</h4>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium">Field</th>
+            <th class="py-1.5 pr-2 font-medium">Type</th>
+            <th class="py-1.5 pr-2 font-medium">Nullable</th>
+            <th class="py-1.5 pr-2 font-medium">Notes</th>
+            <th class="py-1.5 w-8"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of entity().fields; track $index) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2 min-w-28"><input type="text" fInputText fluid [(ngModel)]="f.name" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-32"><f-select fluid [appendTo]="'body'" [options]="fieldTypeOptions" [(ngModel)]="f.type" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2"><f-checkbox [binary]="true" [(ngModel)]="f.nullable" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid [(ngModel)]="f.notes" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeField($index)" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addField()" />
+    <p class="text-xs text-muted-color mt-2">id, createdAt, updatedAt, deletedAt come from the Identity base class — don't list them.</p>
+  </div>
+
+  <div>
+    <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Company scoping</h4>
+    <f-select fluid [appendTo]="'body'" [options]="companyScopingOptions" [ngModel]="entity().companyScoping.kind" (ngModelChange)="onCompanyScopingChange($event)" />
+    @if (entity().companyScoping.kind === 'cross-tenant') {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">Managing actor</label>
+          <input type="text" fInputText fluid placeholder="e.g. Super Admin" [(ngModel)]="$any(entity().companyScoping).managingActor" (ngModelChange)="store.touch()" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-muted-color">Gating permission</label>
+          <input type="text" fInputText fluid [(ngModel)]="$any(entity().companyScoping).gatingPermission" (ngModelChange)="store.touch()" />
+        </div>
+      </div>
+    }
+  </div>
+
+  <div>
+    <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Enums</h4>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium">Enum</th>
+            <th class="py-1.5 pr-2 font-medium">Values (comma)</th>
+            <th class="py-1.5 pr-2 font-medium">Default</th>
+            <th class="py-1.5 w-8"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (en of entity().enums; track $index) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid placeholder="InvoiceStatusEnum" [(ngModel)]="en.name" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-40"><input type="text" fInputText fluid [ngModel]="en.values.join(', ')" (ngModelChange)="onEnumValuesChange($index, $event)" /></td>
+              <td class="py-1.5 pr-2 min-w-24"><input type="text" fInputText fluid [(ngModel)]="en.default" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeEnum($index)" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addEnum()" />
+  </div>
+
+  <div>
+    <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Relations</h4>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-muted-color border-b border-surface">
+            <th class="py-1.5 pr-2 font-medium">Type</th>
+            <th class="py-1.5 pr-2 font-medium">To entity</th>
+            <th class="py-1.5 pr-2 font-medium">On delete</th>
+            <th class="py-1.5 w-8"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of entity().relations; track $index) {
+            <tr class="border-b border-surface last:border-0">
+              <td class="py-1.5 pr-2 min-w-32"><f-select fluid [appendTo]="'body'" [options]="relationTypeOptions" [(ngModel)]="r.type" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-32"><input type="text" fInputText fluid placeholder="OtherEntity" [(ngModel)]="r.to" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5 pr-2 min-w-32"><f-select fluid [appendTo]="'body'" [options]="onDeleteOptions" [(ngModel)]="r.onDelete" (ngModelChange)="store.touch()" /></td>
+              <td class="py-1.5"><f-button icon="trash-2" [text]="true" severity="danger" size="small" fTooltip="Remove" (onClick)="removeRelation($index)" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <f-button label="Add row" icon="plus" [text]="true" size="small" styleClass="mt-2" (onClick)="addRelation()" />
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label class="text-xs text-muted-color">Indexes (comma-separated field names)</label>
+    <input type="text" fInputText fluid [ngModel]="entity().indexes.join(', ')" (ngModelChange)="onIndexesChange($event)" />
+  </div>
+</div>

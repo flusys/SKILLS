@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@import "../node_modules/@flusys/ng-ui/themes/tailwind.scss";
+
+@source "../node_modules/@flusys/**/*.{js,mjs}";
+@source "./**/*.{html,ts}";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
