@@ -13,6 +13,8 @@ Before reviewing, read:
 - `CLAUDE.md`'s Hard Rules
 - `.claude/skills/engineering/SKILL.md` — type safety, null safety, code quality
 - `.claude/skills/engineering/references/database.md` — TypeORM patterns, Service Ownership
+- `.claude/skills/engineering/references/caching.md`'s ApiService Entity Cache — the two cache
+  buckets and which writes are obliged to clear them
 - `.claude/skills/engineering/references/security.md` — OWASP, multi-tenant isolation
 - `.claude/skills/refactor/SKILL.md`'s "Fix only these" and "FLUSYS patterns worth fixing" tables
 
@@ -38,7 +40,15 @@ Check every file you're given for:
    existence check in a `before*Operation` hook, raw SQL
 3. **Reinvented base-class logic** — hand-written CRUD that `ApiService` / `ApiResourceService`
    already provides
-4. **Frontend-specific** (files under the frontend root only) — `computed()` reading
+4. **Bypassed base-class cache invalidation** — in a service whose `super(...)` passes
+   `isCacheable: true`, any write that doesn't go through the base `insert`/`update`/`delete`
+   (an overridden `insert` with its own `queryRunner`, a child-table write, a soft-remove) and
+   doesn't then call **both** `clearCacheForAll()` and `clearCacheForId()` after the commit. Also
+   flag a cached parent left stale by a child write — a denormalized `COUNT(*)`, mapped child
+   rows, or a membership join that gates visibility — and `new HybridCache(...)` passed to
+   `super()` instead of an injected `CACHE_INSTANCE`. This is the mirror image of check 3: not
+   reinvented base logic but *skipped* base logic, and it reads to users as "my change didn't save"
+5. **Frontend-specific** (files under the frontend root only) — `computed()` reading
    `formControl.value` instead of a `signal()`; `AuthStateService.company()` used as a
    super-admin/tenant-actor signal instead of a real permission check; a date-only value built via
    `toISOString().slice(0,10)`; an `f-select`/`f-multiselect`/`f-autocomplete`/`f-treeselect`/
@@ -46,7 +56,7 @@ Check every file you're given for:
    or any other scrollable/`overflow:hidden` container, with no `[appendTo]="'body'"` — a table row
    clips these exactly like a dialog does, not just dialogs; a local `items`/`isLoading` signal mirroring what
    `ApiResourceService` already exposes
-5. **Dead code and broken FLUSYS patterns** — per the refactor skill's tables
+6. **Dead code and broken FLUSYS patterns** — per the refactor skill's tables
 
 Do not flag formatting, naming preference, or working-but-not-optimal code — same restraint the
 refactor skill uses. A clean file gets a clean report, not invented nitpicks.

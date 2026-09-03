@@ -54,7 +54,7 @@ feature, not a convenience.
 
 | Agent | Tools | Model | Job |
 | ----- | ----- | ----- | --- |
-| `code-reviewer` | `Read, Grep, Glob` (no Edit/Write) | `haiku` | Independent pass over changed files — backend and frontend both — for bugs, security, reinvented base-class logic, dead FLUSYS patterns, and (for anything under the frontend root) the Angular/`ng-ui` gotcha catalog in `angular-foundations.md`/`ui-design.md`'s Anti-patterns. Reports `file:line — issue — fix`, grouped by severity, with a one-line verdict. Cannot self-fix by design — the requesting session decides what to apply |
+| `code-reviewer` | `Read, Grep, Glob` (no Edit/Write) | `haiku` | Independent pass over changed files — backend and frontend both — for bugs, security, reinvented *and bypassed* base-class logic (including missed entity-cache invalidation), dead FLUSYS patterns, and (for anything under the frontend root) the Angular/`ng-ui` gotcha catalog in `angular-foundations.md`/`ui-design.md`'s Anti-patterns. Reports `file:line — issue — fix`, grouped by severity, with a one-line verdict. Cannot self-fix by design — the requesting session decides what to apply |
 
 **When to reach for a new agent vs. a skill:** if the task both finds problems *and* fixes them,
 it's a skill (or part of one) — `refactor` fixes inline because there's no value in separating
@@ -105,6 +105,7 @@ opened or edited.
 | `migrations.md` | `backend/src/persistence/migrations/**` | These are generated output; edit the entity and regenerate instead of patching. (Also hook-blocked — this rule explains what to do if you land here anyway) |
 | `tenant-context.md` | `**/controllers/*.controller.ts`, `**/services/*.service.ts` | `companyId`/`branchId` come from `@CurrentUser()`, never a DTO/query/path param — the controller-side half of the Hard Rule that `check-company-filter.sh` enforces mechanically on the service side |
 | `service-ownership.md` | `backend/src/modules/**/services/*.service.ts` | Before touching another entity's table directly (`manager.findOne`/`save`/`getRepository`), check whether it has its own owning service — including across feature/module boundaries — and add a method there instead of reaching around it |
+| `cache-invalidation.md` | `backend/src/modules/**/services/*.service.ts` | In an `isCacheable: true` service, a write that bypasses the base `insert`/`update`/`delete` must clear **both** cache buckets (`clearCacheForAll` + `clearCacheForId`) after the commit — including when the stale payload belongs to a cached *parent* (denormalized counts, mapped child rows, membership joins). Judgment-call half of the entity-cache contract in `caching.md`; there is deliberately no hook for it yet |
 
 **Rules vs. hooks, concretely:** `tenant-context.md` and `check-company-filter.sh` cover the same
 Hard Rule from two angles — the rule reminds a human-authored controller not to trust a

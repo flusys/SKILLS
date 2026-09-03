@@ -256,7 +256,7 @@ Each hook returns `{ query, isRaw: boolean }`. Once any hook sets `isRaw: true`,
 - If dto has no `id` → creates a new entity instance
 
 ```typescript
-import { applyCompanyFilter, DeleteDto, FilterAndPaginationDto, ILoggedUserInfo } from "@flusys/nestjs-shared";
+import { applyCompanyFilter, CACHE_INSTANCE, DeleteDto, FilterAndPaginationDto, ILoggedUserInfo } from "@flusys/nestjs-shared";
 import { ApiService, HybridCache } from "@flusys/nestjs-shared/classes";
 import { UtilsService } from "@flusys/nestjs-shared/modules";
 import { Inject, Injectable, Scope } from "@nestjs/common";
@@ -276,6 +276,7 @@ export class {Entity}Service extends ApiService<
 > {
   constructor(
     private readonly dataSourceProvider: {DataSourceProvider},
+    @Inject(CACHE_INSTANCE) protected override readonly cacheManager: HybridCache,
     @Inject(UtilsService) protected readonly utilsService: UtilsService,
   ) {
     // The FIRST arg here is the query-builder root alias — `getAll`/`getById` build their query
@@ -286,7 +287,14 @@ export class {Entity}Service extends ApiService<
     // `"learning_material."` in a hook) throws `QueryFailedError: "X" alias was not found` on the
     // first real `getAll`/`getById` call — silent until then, since `insert`/`update` never touch
     // these hooks.
-    super("{entity}", new HybridCache(60000), utilsService, {Entity}Service.name, true, "{app-slug}", {Entity}, dataSourceProvider);
+    // The 5th arg (`true`) turns the entity cache ON — that is a CONTRACT, not a free win: any
+    // mutation you add that doesn't go through the base `insert`/`update`/`delete` must clear BOTH
+    // cache buckets by hand (`clearCacheForAll()` + `clearCacheForId()`), after the commit. Read
+    // engineering/references/caching.md's "ApiService Entity Cache" before adding a write method.
+    // And never pass `new HybridCache(...)` here: this service is `Scope.REQUEST`, so that builds
+    // a private cache per request — never a hit, plus a new Redis client per request under
+    // redis/hybrid. Always inject the app-wide `CACHE_INSTANCE`.
+    super("{entity}", cacheManager, utilsService, {Entity}Service.name, true, "{app-slug}", {Entity}, dataSourceProvider);
   }
 
   protected override async convertSingleDtoToEntity(

@@ -106,6 +106,12 @@ looks fine in isolation:
 - `@InjectRepository` → the project's DataSource provider
 - `companyId` read from a DTO instead of `@CurrentUser()`
 - missing company filter on a list or get query for a company-scoped entity
+- a custom write method on an `isCacheable: true` service that clears one cache bucket or neither
+  — it needs both `clearCacheForAll()` and `clearCacheForId()` after the commit; also a cached
+  parent (denormalized `COUNT(*)`, mapped child rows, a visibility join) left stale by a child
+  write. See `engineering/references/caching.md`'s ApiService Entity Cache
+- `new HybridCache(...)` passed to `super()` in a `Scope.REQUEST` service → inject
+  `CACHE_INSTANCE`
 - bare `throw new Error()` → an HTTP exception with `{ message, messageKey }`
 
 ## Output

@@ -13,7 +13,7 @@ needs them — this file stays cheap to load for every write/review pass.
 | Load | When |
 | ---- | ---- |
 | [references/database.md](references/database.md) | Designing or reviewing entities, migrations, queries — includes the Service Ownership pattern for multi-service domains |
-| [references/caching.md](references/caching.md) | Adding `HybridCache`, or reviewing Angular `computed()`/bundle-size performance |
+| [references/caching.md](references/caching.md) | Adding `HybridCache`, **adding or reviewing any write method on an `isCacheable: true` service** (the entity-cache invalidation contract), or reviewing Angular `computed()`/bundle-size performance |
 | [references/security.md](references/security.md) | Any OWASP review pass, multi-tenant isolation, or auth/permission code |
 | [references/angular-foundations.md](references/angular-foundations.md) | Consuming session state, file URLs, layout, or IAM permission signals from a feature component |
 
