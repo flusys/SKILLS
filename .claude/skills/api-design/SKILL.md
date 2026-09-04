@@ -321,6 +321,38 @@ export const permissionSyncProvider: Provider = {
 };
 ```
 
+### Domain Events
+
+An adapter token is a call: the caller wants the thing to happen, and usually wants the result.
+A **domain event** is the opposite — the publisher states a fact and does not care who reacts.
+Every `@flusys/*` service already publishes `<module>.<entity>.<action>` after commit, so a
+cross-module reaction is often a consumer in this app rather than a new call inside the other
+module:
+
+```typescript
+import { OnDomainEvent } from '@flusys/nestjs-shared/decorators';
+import { DomainEvent } from '@flusys/nestjs-shared/interfaces';
+
+@Injectable()
+export class InvoiceProjectionConsumer {
+  @OnDomainEvent('form-builder.form_result.submitted')
+  async onSubmitted(event: DomainEvent): Promise<void> { /* … */ }
+}
+```
+
+Pick per requirement, not per taste:
+
+| Use | When |
+| --- | ---- |
+| Adapter token / direct service call | The caller needs it to happen, needs the result, or needs it in the same request. Losing it would be a bug |
+| Domain event | Audit trails, projections, cache busting, fan-out, cross-service integration — no caller is waiting, and a dropped event is survivable |
+
+Events are fire-and-forget: published after the transaction commits, never failing the write,
+handler errors caught and logged, and dropped entirely while a broker is down. Full mechanism —
+transports, per-module `events` allowlists, `publishDomainAction`, consumer rules and the
+anti-pattern table — in
+[engineering/references/domain-events.md](../engineering/references/domain-events.md).
+
 ### API Documentation
 
 Every module gets its own Swagger page via `setupSwaggerDocs` — full option reference (tag/path/
@@ -337,7 +369,7 @@ Use when there is **no entity lifecycle** — business actions only: summaries, 
 - Controller does NOT extend any base class
 - Declare ONLY the endpoints the PRD explicitly requires — no extras
 - Service does NOT extend `ApiService`
-- No `resolveEntity`, `getFilterQuery`, or any CRUD hook methods in the service
+- No `getFilterQuery`, `getSelectQuery`, or any CRUD hook methods in the service
 - `@LogAction` on controller handler only — never on service methods
 
 ### Controller

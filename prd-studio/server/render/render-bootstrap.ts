@@ -33,6 +33,8 @@ export function renderBootstrapPrd(prd: BootstrapPrd): string {
     ["enableCompanyFeature", bool(configValues.enableCompanyFeature)],
     ["permissionMode", configValues.permissionMode],
     ["enableEmailVerification", bool(configValues.enableEmailVerification)],
+    ["ENABLE_DOMAIN_EVENTS", bool(configValues.enableDomainEvents)],
+    ["USE_EVENT_LABEL", configValues.eventTransport],
     ["ADMIN_EMAIL", configValues.adminEmail],
     ["ADMIN_PASSWORD", configValues.adminPassword],
   ];

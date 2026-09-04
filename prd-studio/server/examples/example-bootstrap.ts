@@ -15,6 +15,8 @@ export const exampleBootstrap: BootstrapPrd = {
     enableCompanyFeature: true,
     permissionMode: "RBAC",
     enableEmailVerification: true,
+    enableDomainEvents: true,
+    eventTransport: "memory",
     adminEmail: "admin@invoicely.com",
     adminPassword: "TODO: set before first run",
   },

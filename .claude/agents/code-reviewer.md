@@ -16,6 +16,8 @@ Before reviewing, read:
 - `.claude/skills/engineering/references/caching.md`'s ApiService Entity Cache — the two cache
   buckets and which writes are obliged to clear them
 - `.claude/skills/engineering/references/security.md` — OWASP, multi-tenant isolation
+- `.claude/skills/engineering/references/domain-events.md` — only when a file you're given
+  publishes (`publishDomainAction` / `publishDomainEvent`) or consumes (`@OnDomainEvent`) events
 - `.claude/skills/refactor/SKILL.md`'s "Fix only these" and "FLUSYS patterns worth fixing" tables
 
 If any file you're given is under `dashboard/` (or the project's frontend root) — an `.ts`
@@ -56,7 +58,13 @@ Check every file you're given for:
    or any other scrollable/`overflow:hidden` container, with no `[appendTo]="'body'"` — a table row
    clips these exactly like a dialog does, not just dialogs; a local `items`/`isLoading` signal mirroring what
    `ApiResourceService` already exposes
-6. **Dead code and broken FLUSYS patterns** — per the refactor skill's tables
+6. **Domain events** (only in files that publish or consume them) — a `@OnDomainEvent` handler on
+   a `REQUEST`-scoped provider (it never runs); a handler whose failure would break a requirement,
+   or that is the only path for something that must happen (delivery is dropped during a broker
+   outage and handler errors are swallowed); a handler that is not idempotent on redelivery; a
+   publish inside the transaction rather than after the commit; personal or credential data in a
+   published payload where ids plus `metadata` would do
+7. **Dead code and broken FLUSYS patterns** — per the refactor skill's tables
 
 Do not flag formatting, naming preference, or working-but-not-optimal code — same restraint the
 refactor skill uses. A clean file gets a clean report, not invented nitpicks.

@@ -8,6 +8,7 @@ import { LocalizationModule } from "@flusys/nestjs-localization";
 import { NotificationModule } from "@flusys/nestjs-notification";
 import {
   CacheModule,
+  EventBusModule,
   LoggerMiddleware,
   SharedPermissionCacheModule,
 } from "@flusys/nestjs-shared";
@@ -18,7 +19,9 @@ import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
+import { DomainEventConsumer } from "./consumers";
 import {
+  appDomainEventsConfig,
   getAiAssistantModuleOptions,
   getAuthModuleOptions,
   getEmailModuleOptions,
@@ -34,6 +37,13 @@ import {
 @Module({
   imports: [
     CacheModule.forRoot(true, 8.64e7, 10000),
+    // serviceName identifies this process on the broker (queue / clientId).
+    // defaultModuleEvents covers this app's own modules - the packages carry
+    // their own events block from modules.config.ts.
+    EventBusModule.forRoot({
+      serviceName: "my-app",
+      defaultModuleEvents: appDomainEventsConfig,
+    }),
     SharedPermissionCacheModule,
     ThrottlerModule.forRoot([
       { name: "short", ttl: 1000, limit: 5 },
@@ -57,7 +67,11 @@ import {
     LocalizationModule.forRoot(getLocalizationModuleOptions()),
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    AppService,
+    DomainEventConsumer,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

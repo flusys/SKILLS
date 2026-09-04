@@ -49,6 +49,14 @@
         <f-checkbox [binary]="true" inputId="enableEmailVerification" [ngModel]="b.configValues.enableEmailVerification" (ngModelChange)="b.configValues.enableEmailVerification = $event; store.touch()" />
         <label for="enableEmailVerification" class="text-sm">enableEmailVerification</label>
       </div>
+      <div class="flex items-center gap-2 pt-5">
+        <f-checkbox [binary]="true" inputId="enableDomainEvents" [ngModel]="b.configValues.enableDomainEvents" (ngModelChange)="b.configValues.enableDomainEvents = $event; store.touch()" />
+        <label for="enableDomainEvents" class="text-sm">ENABLE_DOMAIN_EVENTS</label>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">USE_EVENT_LABEL — memory unless several services must see each other's events</label>
+        <f-select fluid [appendTo]="'body'" [options]="eventTransportOptions" [ngModel]="b.configValues.eventTransport" (ngModelChange)="b.configValues.eventTransport = $event; store.touch()" />
+      </div>
       <div class="flex flex-col gap-1">
         <label class="text-xs text-muted-color">ADMIN_EMAIL</label>
         <input type="text" fInputText fluid [ngModel]="b.configValues.adminEmail" (ngModelChange)="b.configValues.adminEmail = $event; store.touch()" />

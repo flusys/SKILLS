@@ -252,6 +252,14 @@ export class FeaturePanelComponent {
     this.feature().nonFunctional.auditLogOn = splitCsv(v);
     this.store.touch();
   }
+  onEventsPublishedChange(v: string): void {
+    this.feature().nonFunctional.domainEventsPublished = splitCsv(v);
+    this.store.touch();
+  }
+  onEventsConsumedChange(v: string): void {
+    this.feature().nonFunctional.domainEventsConsumed = splitCsv(v);
+    this.store.touch();
+  }
   addNotification(): void {
     this.feature().nonFunctional.notificationsTriggered.push({ when: "", to: "" });
     this.store.touch();

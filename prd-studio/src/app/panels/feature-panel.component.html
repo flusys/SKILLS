@@ -411,6 +411,15 @@
         <input type="text" fInputText fluid [ngModel]="feature().nonFunctional.auditLogOn.join(', ')" (ngModelChange)="addAuditAction($event)" />
       </div>
 
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Domain events published (comma-separated, &lt;module&gt;.&lt;entity&gt;.&lt;action&gt;)</label>
+        <input type="text" fInputText fluid [ngModel]="feature().nonFunctional.domainEventsPublished.join(', ')" (ngModelChange)="onEventsPublishedChange($event)" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-muted-color">Domain events consumed (comma-separated patterns)</label>
+        <input type="text" fInputText fluid [ngModel]="feature().nonFunctional.domainEventsConsumed.join(', ')" (ngModelChange)="onEventsConsumedChange($event)" />
+      </div>
+
       <div>
         <h4 class="text-xs font-semibold uppercase tracking-wide text-muted-color mb-2">Notifications triggered</h4>
         <div class="overflow-x-auto">

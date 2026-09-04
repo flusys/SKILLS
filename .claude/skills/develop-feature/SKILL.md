@@ -24,7 +24,7 @@ Load each at the step that needs it, not all up front.
 | 1 — a feature that extends the user record | `user-enricher` — **instead of** steps 2–5 below |
 | 2 — entities and schema | `engineering` → [references/database.md](../engineering/references/database.md) |
 | 3 — endpoint design | `api-design` |
-| 4 — backend code | `api-design` → [references/crud-generation.md](../api-design/references/crud-generation.md) |
+| 4 — backend code | `api-design` → [references/crud-generation.md](../api-design/references/crud-generation.md); `engineering` → [references/domain-events.md](../engineering/references/domain-events.md) when the feature publishes or consumes events |
 | 5 — Angular UI | `api-design` → crud-generation.md (Phase 4), `ui-design` (component/styling choices) |
 | 6 — review | `engineering` (Code Quality) → [references/caching.md](../engineering/references/caching.md), [references/security.md](../engineering/references/security.md) |
 
@@ -45,6 +45,7 @@ Permissions:   <feature>.read, <feature>.create, …
 Soft delete:   yes/no
 Localization:  yes/no
 Caching:       <list endpoint TTL, or none>
+Events:        publishes <module>.<entity>.<action> … | consumes <pattern> … | none
 UI:            list page + form <+ special behaviour>
 ────────────────────────────────────────
 Proceed? (confirm or adjust)
@@ -156,6 +157,36 @@ hand-write the handlers. Barrel-export the new files in `dto/index.ts`, `service
 `controllers/index.ts`, then register the module in `app.module.ts` (new domain only) and add its
 barrel export to `modules/index.ts`.
 
+**Domain events — only if the PRD asks for them.** Two shapes, both covered by
+[engineering/references/domain-events.md](../engineering/references/domain-events.md):
+
+- *This feature reacts to something another module did* ("when a file is uploaded…", "when a user
+  is deleted…") → an `@OnDomainEvent` consumer, on a **singleton** provider in this domain module,
+  never a change inside the other module. Handlers must be idempotent and must not be the only
+  path for anything that has to happen — events are dropped while a broker is down and handler
+  errors are logged, not raised.
+- *This feature announces a state change others may care about* → `this.publishDomainAction(
+  'settled', { ids, metadata, user })` after the commit, from the service that owns the entity.
+  Plain CRUD needs no code: extending `ApiService` already emits `created`/`updated`/`deleted`.
+
+`ApiService`'s 6th constructor argument — the app slug already passed in the generated
+`super(...)` call — is the `<module>` segment of every event this service emits, so the app's
+events are `<app-slug>.<entity>.<action>` and `<app-slug>.**` matches all of them. It is required,
+so keep it byte-identical across services rather than letting one drift.
+A feature module registers no `events` block of its own, so its events also need
+`defaultModuleEvents` armed on `EventBusModule.forRoot` in `app.module.ts` — without it
+`publishDomainAction` is a silent no-op while the `@flusys/*` packages publish normally. Unlike a
+package's block, `appDomainEventsConfig` sets no `actions`, so every action an app service
+publishes is allowed once it is armed — there is no per-entity list to extend for a new feature.
+
+**Before writing either shape, confirm events are actually on.** Check `ENABLE_DOMAIN_EVENTS` in
+`backend/.env` and that `EventBusModule.forRoot` passes `defaultModuleEvents`. If the PRD asks for
+an event but the project was bootstrapped with events off, say so and get it turned on rather than
+generating a publish that never fires — nothing at build or run time reports the difference.
+
+If the PRD needs the reaction to be guaranteed, or needs its result, call the owning service or an
+adapter token instead — that choice is the table in `api-design`'s Domain Events section.
+
 Every entity/DTO/interface TypeScript property is **camelCase, always** — snake_case is reserved
 exclusively for the DB column name inside `@Column({ name: "..." })`. This is easy to get
 internally-consistently wrong (all-snake_case properties still compile and `tsc` never flags it),
@@ -238,6 +269,9 @@ Two rules are worth restating because violating them is silent rather than loud:
 - Every list and get query on a company-scoped entity must be filtered by company. Use
   `applyCompanyFilter(query, { isCompanyFeatureEnabled, entityAlias }, user)` from
   `@flusys/nestjs-shared` — a missing filter is a cross-tenant data leak, not a bug report.
+- If the feature publishes or consumes events: the publish happens after the commit, the consumer
+  sits on a singleton provider, nothing the feature must do depends on a handler running, and no
+  personal or credential data rides in the payload where ids plus `metadata` would do.
 
 This is self-review — you check your own work in the same pass. Before committing, delegate to the
 `code-reviewer` agent for an independent, read-only second pass over the files this step touched;

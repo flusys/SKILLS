@@ -85,6 +85,12 @@ export function parseBootstrapPrd(md: string): BootstrapPrd {
       enableCompanyFeature: boolFrom(cfg.enableCompanyFeature ?? "no"),
       permissionMode: (cfg.permissionMode as "FULL" | "RBAC" | "DIRECT") ?? "FULL",
       enableEmailVerification: boolFrom(cfg.enableEmailVerification ?? "no"),
+      enableDomainEvents: boolFrom(cfg.ENABLE_DOMAIN_EVENTS ?? "no"),
+      eventTransport: (cfg.USE_EVENT_LABEL as
+        | "memory"
+        | "rabbitmq"
+        | "kafka"
+        | "hybrid") ?? "memory",
       adminEmail: cfg.ADMIN_EMAIL ?? "",
       adminPassword: cfg.ADMIN_PASSWORD ?? "",
     },

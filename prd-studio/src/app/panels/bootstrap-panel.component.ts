@@ -37,6 +37,7 @@ export class BootstrapPanelComponent {
   readonly dbTypeOptions: string[] = ["postgres", "mysql"];
   readonly databaseModeOptions: string[] = ["single", "multi-tenant"];
   readonly permissionModeOptions: string[] = ["FULL", "RBAC", "DIRECT"];
+  readonly eventTransportOptions: string[] = ["memory", "rabbitmq", "kafka", "hybrid"];
   readonly mapsToOptions: string[] = ["companyId", "branchId"];
   readonly packageKeys = PACKAGE_KEYS;
 

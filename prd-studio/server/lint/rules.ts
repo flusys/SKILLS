@@ -1,3 +1,4 @@
+import { PACKAGE_KEYS, type PackageKey } from "../schema/constants.js";
 import type { BootstrapPrd } from "../schema/bootstrap.js";
 import type { FeaturePrd } from "../schema/feature.js";
 
@@ -69,6 +70,42 @@ export function lint(bootstrap: BootstrapPrd, features: FeaturePrd[]): LintIssue
     if (f.localization.translatedContentRequired && !selected.has("localization")) {
       push("blocking", f.slug, `"${f.name}" requires translated content but "localization" isn't selected in Package Selection.`);
     }
+  }
+
+  // Domain events: declared anywhere means the bus has to be armed, and a consumed
+  // pattern's first segment names the module that has to be publishing it.
+  const events = bootstrap.configValues;
+  for (const f of features) {
+    const declared = [
+      ...f.nonFunctional.domainEventsPublished,
+      ...f.nonFunctional.domainEventsConsumed,
+    ];
+    if (declared.length > 0 && !events.enableDomainEvents) {
+      push(
+        "blocking",
+        f.slug,
+        `"${f.name}" declares domain events (${declared.join(", ")}) but ENABLE_DOMAIN_EVENTS is false in Config Values — nothing would ever publish or fire.`,
+      );
+    }
+    for (const pattern of f.nonFunctional.domainEventsConsumed) {
+      const module = pattern.split(".")[0];
+      if (module && module !== "**" && module !== "#" && module !== "*" && module !== "auth") {
+        if ((PACKAGE_KEYS as readonly string[]).includes(module) && !selected.has(module as PackageKey)) {
+          push(
+            "blocking",
+            f.slug,
+            `"${f.name}" consumes "${pattern}" but "${module}" isn't selected in Package Selection — that event can never be published.`,
+          );
+        }
+      }
+    }
+  }
+  if (events.eventTransport !== "memory" && !events.enableDomainEvents) {
+    push(
+      "warning",
+      "bootstrap",
+      `USE_EVENT_LABEL is "${events.eventTransport}" but ENABLE_DOMAIN_EVENTS is false — no transport is created at all while the switch is off.`,
+    );
   }
 
   // enableCompanyFeature must be true if any entity is company-scoped.

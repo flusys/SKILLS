@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   databaseModeSchema,
   dbTypeSchema,
+  eventTransportSchema,
   packageKeySchema,
   permissionModeSchema,
   tenantMapsToSchema,
@@ -28,6 +29,8 @@ export const configValuesSchema = z.object({
   enableCompanyFeature: z.boolean(),
   permissionMode: permissionModeSchema,
   enableEmailVerification: z.boolean(),
+  enableDomainEvents: z.boolean().default(false),
+  eventTransport: eventTransportSchema.default("memory"),
   adminEmail: z.string().min(1),
   adminPassword: z.string().min(1, "required — or the literal string 'TODO: set before first run'"),
 });

@@ -187,6 +187,8 @@ export const nonFunctionalSchema = z.object({
   softDelete: z.boolean(),
   auditLogOn: z.array(z.string()).default([]),
   notificationsTriggered: z.array(z.object({ when: z.string(), to: z.string() })).default([]),
+  domainEventsPublished: z.array(z.string()).default([]),
+  domainEventsConsumed: z.array(z.string()).default([]),
   fileAttachments: z.array(fileAttachmentSchema).default([]),
 });
 

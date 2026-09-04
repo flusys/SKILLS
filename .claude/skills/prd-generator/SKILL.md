@@ -191,6 +191,19 @@ the bootstrap PRD.
 **Propagate package needs upward.** If any feature module needs notifications, file attachments,
 or translated content, the matching package must be selected in the bootstrap PRD.
 
+**Spot domain events.** A requirement worded as a *reaction* — "log every change for audit", "when
+a file is uploaded, …", "notify accounting when an order ships", "another service needs to know" —
+is a domain event consumer, not a change inside the module that acted. Every `@flusys/*` service
+already publishes `<module>.<entity>.<action>` after commit, so record the reaction in the
+consuming feature's `## Dependencies` (`Consumes: storage.file_manager.uploaded`) and set
+`ENABLE_DOMAIN_EVENTS` in the bootstrap PRD's Config Values. Cross-service delivery (a second
+backend, a worker) also decides the transport: `rabbitmq` or `kafka` instead of `memory`.
+
+Keep the distinction the implementation makes: an event is a fact nobody is waiting on. If the
+requirement says the reaction *must* happen for the operation to be correct — the order is not
+valid until stock is reserved — that is a direct call inside the same request, not an event, and
+belongs in the feature's `## Endpoints` behaviour instead.
+
 ---
 
 ## Step 3 — Write `docs/prd-bootstrap.md`
@@ -216,6 +229,9 @@ or translated content, the matching package must be selected in the bootstrap PR
 | enableCompanyFeature | true \| false | <signal> |
 | permissionMode | FULL \| RBAC \| DIRECT | <signal> |
 | enableEmailVerification | true \| false | email package selected? |
+| ENABLE_DOMAIN_EVENTS | true \| false | any audit/reaction/cross-service requirement? |
+| USE_EVENT_LABEL | memory \| rabbitmq \| kafka \| hybrid | one process → memory; several services → broker |
+| EVENT_BROKER | rabbitmq \| kafka | only when USE_EVENT_LABEL is `hybrid` — which broker it pairs with in-process delivery; omit the row otherwise |
 | ADMIN_EMAIL | admin@<appname>.com | default |
 | ADMIN_PASSWORD | <TODO: set before first run> | must be changed |
 
@@ -429,6 +445,8 @@ surfaces the resubmission-semantics question before a `develop-feature` run has 
 - Known expensive joins or N+1 risks: <describe, or none>
 - Soft delete: yes | no
 - Audit log on: <which actions, or none>
+- Domain events published: `<app-slug>.<entity>.<action>`, … or none
+- Domain events consumed: `<module>.<entity>.<action>` pattern, … or none
 - Notifications triggered: <when and to whom, or none>
 - File attachments: <field name, allowed types, max size, or none>
 
@@ -447,6 +465,14 @@ Verify and fix before printing the summary:
 - [ ] Every navigation entry in the bootstrap PRD has a matching feature PRD
 - [ ] Every package a feature PRD relies on is selected in the bootstrap PRD — notifications,
       file attachments, and translated content each require theirs
+- [ ] If any feature PRD's `## Non-Functional` names a published or consumed domain event, or any
+      `## Dependencies` has a `Consumes:` line, the bootstrap PRD's `ENABLE_DOMAIN_EVENTS` is
+      `true` — with it `false` the publish and the handler are both silent no-ops at runtime, with
+      no error anywhere to say so
+- [ ] Every `Consumes:` pattern names a module that is actually selected — a pattern like
+      `storage.file_manager.uploaded` requires the storage package
+- [ ] If any consumer must run in a *different* process from the publisher, `USE_EVENT_LABEL` is a
+      broker (`rabbitmq`/`kafka`), not `memory` — `memory` never leaves the process
 - [ ] `enableCompanyFeature` is `true` if any feature entity is company-scoped
 - [ ] No feature PRD defines an entity, or Full/Partial CRUD endpoints, for the requirements' own
       tenant/sub-unit noun (school, clinic, org, campus, …) when it maps to `companyId`/

@@ -213,6 +213,8 @@ function renderNonFunctional(prd: FeaturePrd): string {
     `- Soft delete: ${nf.softDelete ? "yes" : "no"}`,
     `- Audit log on: ${nf.auditLogOn.length ? nf.auditLogOn.join(", ") : "none"}`,
     `- Notifications triggered: ${nf.notificationsTriggered.length ? nf.notificationsTriggered.map((n) => `${n.when} → ${n.to}`).join("; ") : "none"}`,
+    `- Domain events published: ${nf.domainEventsPublished.length ? nf.domainEventsPublished.join(", ") : "none"}`,
+    `- Domain events consumed: ${nf.domainEventsConsumed.length ? nf.domainEventsConsumed.join(", ") : "none"}`,
     `- File attachments: ${nf.fileAttachments.length ? nf.fileAttachments.map((f) => `${f.field} (${f.allowedTypes.join("/")}, max ${f.maxSizeMb}MB)`).join("; ") : "none"}`,
   ];
   return lines.join("\n");

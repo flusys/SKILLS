@@ -32,8 +32,11 @@ exposes exactly three configuration surfaces:
 | Registration | `XxxModule.forRoot(getXxxModuleOptions())` in `app.module.ts` | `...provideXxxProviders()` in `app.config.ts` |
 | Options | `getXxxModuleOptions()` in `config/modules.config.ts` | `services.xxx` in `environments/environment.ts` |
 | Routes / entities | `getXxxEntitiesByConfig()` in `config/entities.config.ts` | `XXX_ROUTES` in `app.routes.ts` |
+| Domain events | that module's entry in `moduleEventsConfig` (`config/modules.config.ts`) | — (backend only) |
 
-Phase B walks those three surfaces once per package and keeps or removes.
+Phase B walks those four surfaces once per package and keeps or removes. The events entry is the
+one most easily forgotten, because leaving it behind fails at *startup* — it imports from a
+package that is no longer installed.
 
 ---
 
@@ -77,6 +80,7 @@ package selection are confirmed together, not in two separate prompts):
 | `dashboard/package.json` | `name` → app slug |
 | `backend/package.json` | `name` → app slug |
 | `backend/.env` | `PORT`, `ALLOW_ORIGINS`, `FRONTEND_URL`, `APP_URL`, `DB_TYPE`, `DB_PORT`, `DB_NAME`, and fresh random `JWT_SECRET` / `REFRESH_TOKEN_SECRET` |
+| `backend/src/app.module.ts` | `EventBusModule.forRoot({ serviceName: ... })` → app slug — it names this process's broker queue / Kafka client |
 | `backend/src/modules/shared/app-datasource.provider.ts` | rename the class — five static field declarations plus the constructor call |
 | `backend/src/modules/shared/swagger.config.ts` | rename the exported function; update `title` and `path` |
 | `dashboard/src/index.html` | `<title>` |
@@ -149,11 +153,18 @@ package selection.)
 | `databaseMode` | Each tenant has its OWN separate database → `'multi-tenant'`. Everything else → `'single'`. **Never infer `multi-tenant` from the word "SaaS" alone.** | `'single'` |
 | `permissionMode` | "role-based only" → `RBAC`; "direct only" → `DIRECT`; "both / flexible" → `FULL` | `'FULL'` |
 | `enableEmailVerification` | "verify email", "confirm account" | `true` only if the email package is selected |
+| `ENABLE_DOMAIN_EVENTS` | "audit trail", "activity log", "webhook", "react when X happens", "another service consumes", "event-driven" | `false` |
+| `USE_EVENT_LABEL` | Only one process → `memory`. Several services must see each other's events → `rabbitmq` (or `kafka` if the PRD names it), which also needs `npm i amqplib` / `kafkajs` | `memory` |
 | Backend `PORT` | from PRD or convention | `3002` |
 | Frontend `PORT` | from PRD or convention | `3001` |
 
 `enableCompanyFeature` and `databaseMode` are independent. Multiple companies in one shared
 database is `databaseMode: 'single'` **plus** `enableCompanyFeature: true` — not multi-tenant.
+
+Domain events stay **off** unless the PRD asks for something that consumes them. The template
+ships the wiring either way — `EventBusModule` in `app.module.ts`, a per-module `events` block in
+`moduleEventsConfig`, and a sample consumer in `src/consumers/` — so turning them on later is one
+env flag, not a re-wire. Leave the wiring in place even when the answer is `false`.
 
 ### 1.2 Package selection
 
@@ -209,6 +220,7 @@ Config:
   enableCompanyFeature:    true
   permissionMode:          FULL
   enableEmailVerification: false
+  domainEvents:            off  (transport: memory)
   ports:                   backend 3002 · frontend 3001
 ────────────────────────────────────────
 Proceed? (confirm or adjust)
@@ -249,7 +261,16 @@ All `@flusys/*` packages come from npm. There is nothing to build locally.
 ```bash
 cd backend   && npm install
 cd dashboard && npm install
+
+# Only for a broker transport — USE_EVENT_LABEL=rabbitmq (or hybrid with EVENT_BROKER=rabbitmq)
+cd backend && npm i amqplib
+# Only for USE_EVENT_LABEL=kafka (or hybrid with EVENT_BROKER=kafka)
+cd backend && npm i kafkajs
 ```
+
+Skip both for `memory`. Getting this wrong is silent: the driver loads at runtime, so a missing
+one logs an error and degrades to in-process delivery rather than failing boot — Step 6's
+`was requested but is unavailable` check is what catches it.
 
 ```bash
 # backend/
@@ -338,6 +359,12 @@ Report each item honestly. Do not mark one passed that you did not actually obse
 - [ ] Every selected package's route (`/iam`, `/storage`, …) resolves — no chunk-load errors
 - [ ] (localization selected) `| translate` shows real values, not raw keys
 - [ ] (notification selected) socket connects after login and disconnects after logout
+- [ ] (domain events on) a login logs one `auth.session.logged-in` line from `DomainEventConsumer`,
+      and startup logs `Bound N domain event handler(s)` — no handler bound means `EventBusModule`
+      is missing or `ENABLE_DOMAIN_EVENTS` is not `true`
+- [ ] (domain events on, broker transport) startup does **not** log `was requested but is
+      unavailable` — that message means it silently degraded to in-process delivery and nothing
+      reaches another service
 - [ ] An `insert` call missing a required field returns `400`, not `200`/`500` — the known
       `createApiController` validation-bypass issue above is silent otherwise
 
@@ -407,5 +434,8 @@ CI/CD.
 | Omitting an unselected service from `environment.ts` | Set `enabled: false` — omitting breaks runtime feature detection |
 | One `setupSwaggerDocs(app, {...})` for all modules | One call per module using each package's `xxxSwaggerConfig()` from `@flusys/nestjs-xxx/docs` |
 | Dropping `CacheModule` / `ThrottlerModule` | Always required infrastructure |
+| Deleting `EventBusModule` / `src/consumers/` because events are off | The switch is `ENABLE_DOMAIN_EVENTS`; with it off the module creates no transport and binds no handler |
+| An `events` block left armed for a package that was removed | Trim its entry from `moduleEventsConfig` along with the rest of the package's wiring |
+| Broker transport without its driver | `rabbitmq` needs `npm i amqplib`, `kafka` needs `npm i kafkajs` — otherwise it logs an error and degrades to in-process |
 | Removing `x-loader-tag` from CORS `allowedHeaders` | Keep it in `main.ts` — the loader interceptor depends on it |
 | `standalone: true` on a component | Angular 22 — standalone is the default, the flag is noise |

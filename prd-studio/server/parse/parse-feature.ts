@@ -115,6 +115,8 @@ export function parseFeaturePrd(md: string, order: number, slug: string): Featur
       expensiveJoinsOrN1Risks: bulletValue(nfBullets, "Known expensive joins or N+1 risks:") ?? "none",
       softDelete: boolFrom(bulletValue(nfBullets, "Soft delete:") ?? "no"),
       auditLogOn: csv(bulletValue(nfBullets, "Audit log on:") ?? ""),
+      domainEventsPublished: csv(bulletValue(nfBullets, "Domain events published:") ?? ""),
+      domainEventsConsumed: csv(bulletValue(nfBullets, "Domain events consumed:") ?? ""),
       notificationsTriggered:
         notifRaw === "none"
           ? []

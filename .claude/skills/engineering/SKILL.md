@@ -1,26 +1,29 @@
 ---
 name: engineering
-description: FLUSYS engineering standards — TypeScript/Angular code quality, TypeORM database patterns, HybridCache performance, and OWASP security. Load for any NestJS/Angular code writing or review.
+description: FLUSYS engineering standards — TypeScript/Angular code quality, TypeORM database patterns, HybridCache performance, domain events, and OWASP security. Load for any NestJS/Angular code writing or review.
 ---
 
 # Engineering Standards
 
 Read [references/database.md](references/database.md), [references/caching.md](references/caching.md),
-[references/security.md](references/security.md), and
-[references/angular-foundations.md](references/angular-foundations.md) only at the step that
+[references/domain-events.md](references/domain-events.md), [references/security.md](references/security.md),
+and [references/angular-foundations.md](references/angular-foundations.md) only at the step that
 needs them — this file stays cheap to load for every write/review pass.
 
 | Load | When |
 | ---- | ---- |
 | [references/database.md](references/database.md) | Designing or reviewing entities, migrations, queries — includes the Service Ownership pattern for multi-service domains |
 | [references/caching.md](references/caching.md) | Adding `HybridCache`, **adding or reviewing any write method on an `isCacheable: true` service** (the entity-cache invalidation contract), or reviewing Angular `computed()`/bundle-size performance |
+| [references/domain-events.md](references/domain-events.md) | Registering `EventBusModule`, narrowing a module's `events` block, publishing a domain action from a service, or writing an `@OnDomainEvent` consumer |
 | [references/security.md](references/security.md) | Any OWASP review pass, multi-tenant isolation, or auth/permission code |
 | [references/angular-foundations.md](references/angular-foundations.md) | Consuming session state, file URLs, layout, or IAM permission signals from a feature component |
 
 Before writing a cross-cutting concern yourself — file URLs, session/company/branch state, sidebar
 or theme state, permission checks — check whether `@flusys/ng-shared`, `@flusys/ng-auth`, or
 `@flusys/ng-layout` already exposes it (see angular-foundations.md). The backend equivalent is
-`envConfig` below and the Integration Adapters in the `api-design` skill.
+`envConfig` below, the Integration Adapters in the `api-design` skill, and the domain events every
+`@flusys/*` service already publishes (domain-events.md) — a reaction to something another module
+did usually needs a consumer, not new code inside that module.
 
 ---
 

@@ -52,6 +52,9 @@ async function bootstrap() {
     configureSwaggerDocs(app, port);
   }
 
+  // Required so the event bus closes its broker connections on shutdown
+  app.enableShutdownHooks();
+
   await app.listen(port);
 
   const logger = new Logger('Bootstrap');

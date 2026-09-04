@@ -35,7 +35,9 @@ written so that a complete PRD never needs a follow-up question.
 To add the kit to an _existing_ FLUSYS project instead, copy `.claude/` into it and write a
 `CLAUDE.md` following the shape of this one. The skills glob for project roots rather than
 hardcoding `backend/` and `dashboard/`, so other folder names work — confirm the detected paths
-on the first run.
+on the first run. The `.claude/rules/` files are the exception: their `paths:` globs are rooted at
+`backend/`, so a project whose backend folder is named something else must edit those six globs or
+the rules silently never attach.
 
 ## Tech Stack
 
@@ -43,6 +45,7 @@ on the first run.
 | -------- | ----------------------------------------------------------------------- |
 | Frontend | Angular 22 (signals, standalone, zoneless) + `@flusys/ng-ui` + Tailwind |
 | Backend  | NestJS 11 + TypeORM + PostgreSQL + JWT                                  |
+| Packages | `@flusys/*` **7.0.1** — the release this kit's docs and template are written against |
 | API      | RPC over POST for entity CRUD; GET for domain reads (not REST)          |
 | Ports    | Dashboard `http://localhost:3001` · Backend `http://localhost:3002`     |
 
@@ -56,6 +59,7 @@ internals. Each package exposes exactly three surfaces:
 | Registration      | `XxxModule.forRoot(...)` in `app.module.ts`               | `...provideXxxProviders()` in `app.config.ts`   |
 | Options           | `getXxxModuleOptions()` in `config/modules.config.ts`     | `services.xxx` in `environments/environment.ts` |
 | Routes / entities | `getXxxEntitiesByConfig()` in `config/entities.config.ts` | `XXX_ROUTES` in `app.routes.ts`                 |
+| Domain events     | `moduleEventsConfig` in `config/modules.config.ts`, consumed in `src/consumers/` | — (backend only)               |
 
 ## Skills & Agents
 
@@ -97,7 +101,7 @@ calls; route mechanical, well-scoped, or read-only work to a cheap one the same 
 | Skill                                                  | Purpose                                                                                                                                       |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | [api-design](.claude/skills/api-design/SKILL.md)       | Endpoint strategy, guards, response DTOs; `ApiService`/`ApiResourceService`, CRUD generation, Swagger, and shared components in `references/` |
-| [engineering](.claude/skills/engineering/SKILL.md)     | Code quality, `envConfig`, TypeORM, HybridCache, OWASP security, Angular auth/session foundations                                             |
+| [engineering](.claude/skills/engineering/SKILL.md)     | Code quality, `envConfig`, TypeORM, HybridCache, domain events, OWASP security, Angular auth/session foundations                              |
 | [ui-design](.claude/skills/ui-design/SKILL.md)         | `@flusys/ng-ui` component catalog + Tailwind v4 design guide                                                                                  |
 | [user-enricher](.claude/skills/user-enricher/SKILL.md) | End-to-end user-extension wiring across registration, profile, and admin                                                                      |
 
@@ -130,6 +134,12 @@ actually needed.
   Integration Adapters (grep `@flusys/nestjs-shared/interfaces` for every `*_ADAPTER` token — never
   trust a hardcoded list), method-level in `develop-feature`'s base → hook → custom ladder. Only
   write new code for what nothing already covers, shaped like the closest existing pattern.
+- **A reaction to another module is a consumer, not an edit to that module.** Every `@flusys/*`
+  service publishes `<module>.<entity>.<action>` after commit; subscribe with `@OnDomainEvent` on a
+  singleton provider. Events are fire-and-forget — nothing awaits a handler, handler errors are
+  logged and swallowed, and delivery is dropped during a broker outage — so anything that must
+  happen for the operation to be correct is a direct call or an adapter token instead. See
+  `engineering`'s [domain-events.md](.claude/skills/engineering/references/domain-events.md).
 - **Never modify anything under `node_modules/`.** If a `@flusys/*` package is broken, report it
   by package name and stop.
 - **Never hand-edit migrations.** Change the entity and regenerate.

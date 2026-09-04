@@ -136,6 +136,8 @@ export const exampleFeature: FeaturePrd = {
     expensiveJoinsOrN1Risks: "none",
     softDelete: true,
     auditLogOn: ["send", "void", "record payment"],
+    domainEventsPublished: ["billing.invoice.settled"],
+    domainEventsConsumed: [],
     notificationsTriggered: [],
     fileAttachments: [{ field: "pdfExport", allowedTypes: ["pdf"], maxSizeMb: 5 }],
   },

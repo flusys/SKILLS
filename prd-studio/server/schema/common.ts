@@ -32,6 +32,13 @@ export const onDeleteSchema = z.enum([
   "NO ACTION",
 ]);
 
+export const eventTransportSchema = z.enum([
+  "memory",
+  "rabbitmq",
+  "kafka",
+  "hybrid",
+]);
+
 export const apiStrategySchema = z.enum([
   "Full CRUD",
   "Partial CRUD",

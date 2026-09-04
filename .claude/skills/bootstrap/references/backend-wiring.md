@@ -13,7 +13,8 @@ packages · **Keep** = do not edit.
 | 3 | `src/config/modules.config.ts` | Configure + Trim |
 | 4 | `src/config/entities.config.ts` | Trim |
 | 5 | `src/config/swagger.config.ts` | Trim |
-| 6 | `src/app.module.ts` | Trim |
+| 6 | `src/app.module.ts` | Trim + Configure (`EventBusModule` serviceName) |
+| 6b | `src/consumers/domain-event.consumer.ts` | Keep — trim its example handlers to patterns that exist |
 | 7 | `src/providers/auth-email.provider.ts` | Configure |
 | 8 | `src/providers/iam-sync.provider.ts` | Trim |
 | 9 | `src/providers/ai-assistant.provider.ts` | Trim |
@@ -22,6 +23,9 @@ packages · **Keep** = do not edit.
 | 12 | `src/persistence/seed-admin.ts` | Trim |
 | 13 | `src/persistence/seed-localization.ts` | Trim, or delete if localization unselected |
 | — | `src/main.ts`, `src/app.controller.ts`, `src/app.service.ts`, `src/config/security.config.ts`, `src/persistence/migration.config.ts` | Keep |
+
+`src/main.ts` includes `app.enableShutdownHooks()` — keep it. Without it the event bus never
+closes its broker connections on shutdown.
 
 ---
 
@@ -45,6 +49,11 @@ Always keep `@flusys/nestjs-auth`, `@flusys/nestjs-core`, `@flusys/nestjs-shared
 **Transitive deps:** if notification is not selected, also remove `socket.io`,
 `@nestjs/websockets`, `@nestjs/platform-socket.io`.
 
+**Event broker driver:** none is installed by default, and the `memory` transport needs none. Add
+`amqplib` only for `USE_EVENT_LABEL=rabbitmq`, `kafkajs` only for `kafka` (`hybrid` needs whichever
+`EVENT_BROKER` names). Both load at runtime, so a missing driver is an error log and a silent
+degrade to in-process delivery, not a crash.
+
 Leave the `scripts` block alone — `migration:*`, `seed:*`, and `start:*` are all still needed.
 
 ---
@@ -66,6 +75,10 @@ Leave the `scripts` block alone — `migration:*`, `seed:*`, and `start:*` are a
 | `USE_TENANT_MODE` | `true` only when `databaseMode: 'multi-tenant'` |
 | `TENANT_ID` | default tenant key; ignored when `USE_TENANT_MODE=false` |
 | `REDIS_URL` | only if the PRD asks for a shared cache; otherwise leave the default |
+| `ENABLE_DOMAIN_EVENTS` | `true` only when the PRD wants events. Off = no transport, no broker connection, no handler bound |
+| `USE_EVENT_LABEL` | `memory` (default) · `rabbitmq` · `kafka` · `hybrid` — see Step 1.1 |
+| `EVENT_BROKER` | which broker `hybrid` uses; ignored otherwise |
+| `RABBITMQ_URL`, `KAFKA_BROKERS` | only meaningful for the matching transport |
 | `MAX_FILE_SIZE`, `ALLOWED_FILE_TYPES` | only meaningful when storage is selected |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | seed admin credentials — from PRD, else safe defaults |
 
@@ -107,6 +120,22 @@ do not exist.
 the top of the file: ai-assistant, email, event-manager, form-builder, iam, localization,
 notification, storage, task-manager.
 
+**`moduleEventsConfig`** — the domain-events block, one entry per feature package, all armed by
+`ENABLE_DOMAIN_EVENTS`. For each unselected package remove its entry, its `FeatureModuleName`
+union member, and its `@flusys/nestjs-<pkg>/config` import; leaving one in imports from a package
+that is no longer installed and fails at startup. Do not remove the machinery itself
+(`FeatureModuleName`, `getBaseModuleConfig`, `appDomainEventsConfig`) — every
+`getXxxModuleOptions()` calls `getBaseModuleConfig('<module>')` for its datasource config, events
+on or off. `ai-assistant` is the one package with no events support: it keeps plain `getDbConfig()`.
+
+`actions` is the only filter, and every `<entity>.<action>` pair is spelled out in full so the file
+reads as an inventory of what the app can publish — delete a line to stop publishing it, and add
+one when a package gains an entity or action, or it stays silent. Do not collapse the CRUD pairs
+into a shared spread or a bare action. Nothing needs excluding for credentials: the storage and
+email config rows publish, but the sanitizer redacts their `config` blob by name. Narrowing details
+and the full per-package action catalog:
+[engineering/references/domain-events.md](../../engineering/references/domain-events.md).
+
 Each file also ships an async variant (`getXxxModuleAsyncOptions()` + a `XxxConfigFactory`
 class) for config loaded over HTTP at boot. Unless the PRD asks for remote configuration,
 delete the async variants — the template only registers the sync ones.
@@ -147,6 +176,17 @@ Remove the import and the `.forRoot(...)` registration for each unselected packa
 
 `SharedPermissionCacheModule` has no `.forRoot()` and no PRD trigger — it backs permission
 lookups for auth and IAM. Never remove it.
+
+`EventBusModule.forRoot({ serviceName, defaultModuleEvents })` sits beside `CacheModule` and stays
+registered whether or not events are on — with `ENABLE_DOMAIN_EVENTS=false` it creates no
+transport, opens no connection and binds no handler. Set `serviceName` to the app slug (it names
+the RabbitMQ queue and the Kafka client/group). `defaultModuleEvents: appDomainEventsConfig` is
+what arms **this app's own** feature modules: packages register their own `events` block, an app
+module registers nothing and falls through to this default, which is disabled if omitted.
+
+`DomainEventConsumer` (from `./consumers`) is registered in `AppModule.providers`. Keep it and trim
+its handlers to events that can actually fire in this project — a handler for an unselected
+package's event is dead code, not an error.
 
 Every package in the template is registered here, `AiAssistantModule` included. If a package's
 entity helper is in `entities.config.ts`, its module belongs in this file too — the two lists

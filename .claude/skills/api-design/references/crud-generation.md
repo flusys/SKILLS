@@ -294,7 +294,25 @@ export class {Entity}Service extends ApiService<
     // And never pass `new HybridCache(...)` here: this service is `Scope.REQUEST`, so that builds
     // a private cache per request — never a hit, plus a new Redis client per request under
     // redis/hybrid. Always inject the app-wide `CACHE_INSTANCE`.
-    super("{entity}", cacheManager, utilsService, {Entity}Service.name, true, "{app-slug}", {Entity}, dataSourceProvider);
+    // The 6th arg (the app slug) is the `<module>` segment of every domain event this service
+    // publishes — `<app-slug>.<entity>.created`. It is REQUIRED; reuse the same string in every
+    // service so one `<app-slug>.**` pattern matches the whole app.
+    // See engineering/references/domain-events.md.
+    // The last two args are `dataSourceProvider` FIRST, then the entity class — that order, not
+    // the reverse. The entity is fixed at construction and there is no `resolveEntity()` hook to
+    // override, so a service whose table depends on runtime config passes the ternary right here,
+    // reading the injected config through the CONSTRUCTOR PARAMETER (`moduleConfig.isX()`), never
+    // `this.moduleConfig` — `this` does not exist until `super()` returns.
+    super(
+      "{entity}",
+      cacheManager,
+      utilsService,
+      {Entity}Service.name,
+      true,
+      "{app-slug}",
+      dataSourceProvider,
+      {Entity},
+    );
   }
 
   protected override async convertSingleDtoToEntity(
