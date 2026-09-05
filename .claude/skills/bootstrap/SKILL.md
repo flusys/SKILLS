@@ -153,6 +153,7 @@ package selection.)
 | `databaseMode` | Each tenant has its OWN separate database → `'multi-tenant'`. Everything else → `'single'`. **Never infer `multi-tenant` from the word "SaaS" alone.** | `'single'` |
 | `permissionMode` | "role-based only" → `RBAC`; "direct only" → `DIRECT`; "both / flexible" → `FULL` | `'FULL'` |
 | `enableEmailVerification` | "verify email", "confirm account" | `true` only if the email package is selected |
+| `enableSignUp` | "invite-only", "admin creates all accounts", "no public registration" → `false`. Otherwise omit | `true` |
 | `ENABLE_DOMAIN_EVENTS` | "audit trail", "activity log", "webhook", "react when X happens", "another service consumes", "event-driven" | `false` |
 | `USE_EVENT_LABEL` | Only one process → `memory`. Several services must see each other's events → `rabbitmq` (or `kafka` if the PRD names it), which also needs `npm i amqplib` / `kafkajs` | `memory` |
 | Backend `PORT` | from PRD or convention | `3002` |
@@ -188,6 +189,12 @@ env flag, not a re-wire. Leave the wiring in place even when the answer is `fals
 
 > `@flusys/ng-ui` is the component library every other `ng-*` package renders through
 > (`provideNgUI`, `f-button`, tables, dialogs). It has no PRD trigger and is never optional.
+
+> `nestjs-auth` / `ng-auth` also ship Google, Facebook, LinkedIn and Microsoft sign-in built in —
+> no package to select, no bootstrap flag. The login page already renders the buttons and the
+> `/administration/social-config` screen already exists; both stay inert until an administrator
+> saves a provider's client id/secret there. Nothing to wire in this skill beyond `enableSignUp`
+> above, which also governs whether an unrecognized social sign-in may create a new account.
 
 ---
 
@@ -356,6 +363,9 @@ Report each item honestly. Do not mark one passed that you did not actually obse
 - [ ] Protected routes redirect to `/auth/login?returnUrl=...` when logged out
 - [ ] Sidebar menu renders the expected items after login
 - [ ] Each selected module's Swagger doc loads at its `/api/docs/<module>` URL
+- [ ] `/administration/social-config` loads, behind `social-config.read` — the four providers
+      list as disabled until credentials are saved for one
+- [ ] The login page shows no social buttons yet — expected with no provider configured, not a bug
 - [ ] Every selected package's route (`/iam`, `/storage`, …) resolves — no chunk-load errors
 - [ ] (localization selected) `| translate` shows real values, not raw keys
 - [ ] (notification selected) socket connects after login and disconnects after logout

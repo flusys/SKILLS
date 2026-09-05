@@ -109,6 +109,17 @@ entity's notes (`userId | nullable FK to User | set when portal access is grante
 existing user-creation flow`) whenever a requirement says a business-domain record — not the
 person doing the registering — needs to log in later.
 
+**Spot social login requirements.** "Sign in with Google/Facebook/LinkedIn/Microsoft", "social
+login", "OAuth login" describe a capability `nestjs-auth` / `ng-auth` already ship end to end —
+`SocialAuthConfig` credentials CRUD, the authorize/callback flow, account matching by provider id
+then verified email, and a `<lib-social-login-buttons />` component the login page already
+renders. It is not gated by any package selection (auth is always included) or by a bootstrap
+flag — an administrator turns a provider on later by saving its client id/secret at
+`/administration/social-config`, behind the `social-config.read` permission. Do not write a
+feature PRD, entity, or endpoints for it. The only PRD-relevant knob is whether an unrecognized
+social sign-in may create a new account at all — see `enableSignUp` in the Config Values table
+below.
+
 **Spot tenant entities.** When the requirements describe an owning organizational unit that every
 other entity belongs to — school, clinic, store, organization, tenant, client, business — check
 whether it is really the FLUSYS `company` (and, if the PRD also describes a sub-unit under it —
@@ -229,6 +240,7 @@ belongs in the feature's `## Endpoints` behaviour instead.
 | enableCompanyFeature | true \| false | <signal> |
 | permissionMode | FULL \| RBAC \| DIRECT | <signal> |
 | enableEmailVerification | true \| false | email package selected? |
+| enableSignUp | true \| false | omit unless the PRD says invite-only / admin-created accounts only — defaults to `true` and gates both `/auth/register` and a new account being created from an unrecognized social sign-in |
 | ENABLE_DOMAIN_EVENTS | true \| false | any audit/reaction/cross-service requirement? |
 | USE_EVENT_LABEL | memory \| rabbitmq \| kafka \| hybrid | one process → memory; several services → broker |
 | EVENT_BROKER | rabbitmq \| kafka | only when USE_EVENT_LABEL is `hybrid` — which broker it pairs with in-process delivery; omit the row otherwise |

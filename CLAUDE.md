@@ -45,7 +45,7 @@ the rules silently never attach.
 | -------- | ------------------------------------------------------------------------------------ |
 | Frontend | Angular 22 (signals, standalone, zoneless) + `@flusys/ng-ui` + Tailwind              |
 | Backend  | NestJS 11 + TypeORM + PostgreSQL + JWT                                               |
-| Packages | `@flusys/*` **7.0.2** — the release this kit's docs and template are written against |
+| Packages | `@flusys/*` **7.1.0** — the release this kit's docs and template are written against |
 | API      | RPC over POST for entity CRUD; GET for domain reads (not REST)                       |
 | Ports    | Dashboard `http://localhost:3001` · Backend `http://localhost:3002`                  |
 

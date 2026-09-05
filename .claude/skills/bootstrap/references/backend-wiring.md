@@ -104,8 +104,16 @@ export const bootstrapAppConfig: IBootstrapAppConfig = {
   enableCompanyFeature: true,      // from PRD
   permissionMode: "FULL",          // 'FULL' | 'RBAC' | 'DIRECT'
   enableEmailVerification: false,  // true only when the email package is selected
+  // enableSignUp: false,          // omit — defaults to true; set only for invite-only PRDs
 };
 ```
+
+`enableSignUp` gates both `/auth/register` and a brand-new account being created from an
+unrecognized social sign-in (Google/Facebook/LinkedIn/Microsoft, always built into
+`nestjs-auth`/`ng-auth` — no entry here enables or disables them, only credentials saved later at
+`/administration/social-config` do). Leave the line out entirely unless the PRD asked for
+invite-only signup — it already defaults to `true`, and this file follows the kit's "never spell
+out a default" rule.
 
 This object is the backend's source of truth — `entities.config.ts`, `seed-admin.ts`, and every
 package's options factory read from it. Change it here and nowhere else.
@@ -132,8 +140,11 @@ on or off. `ai-assistant` is the one package with no events support: it keeps pl
 reads as an inventory of what the app can publish — delete a line to stop publishing it, and add
 one when a package gains an entity or action, or it stays silent. Do not collapse the CRUD pairs
 into a shared spread or a bare action. Nothing needs excluding for credentials: the storage and
-email config rows publish, but the sanitizer redacts their `config` blob by name. Narrowing details
-and the full per-package action catalog:
+email config rows publish, but the sanitizer redacts their `config` blob by name — the same is true
+of `social_auth_config`'s `clientSecret`. The `auth` block's `social_auth_config` CRUD lines and
+`session.${AUTH_EVENT_ACTIONS.SOCIAL_LOGGED_IN}` are never conditional on a package selection —
+`nestjs-auth` is always kept, so they belong in every project's inventory the same as the rest of
+the `auth` block. Narrowing details and the full per-package action catalog:
 [engineering/references/domain-events.md](../../engineering/references/domain-events.md).
 
 Each file also ships an async variant (`getXxxModuleAsyncOptions()` + a `XxxConfigFactory`
@@ -246,6 +257,12 @@ credentials come from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`.
 **But it also seeds one IAM permission group per package.** For every unselected package, remove
 its `<PKG>_PERMISSIONS` import and the permission group that references it — otherwise the seed
 imports from a package that is no longer installed and fails at run time.
+
+`SOCIAL_AUTH_CONFIG_PERMISSIONS` (`social-config.create|read|update|delete`) never gets this
+treatment — it sits under the Auth Module's action tree alongside `USER_PERMISSIONS`, unconditional
+like the rest of `nestjs-auth`'s own permissions, because the package that owns it is never
+removed. Skipping it leaves no role able to reach `/administration/social-config` even though the
+route and its guard both exist.
 
 `seed-localization.ts` — if localization is **not** selected, delete the file and drop
 `seed:localization` from the first-run steps. If localization **is** selected, trim it: each

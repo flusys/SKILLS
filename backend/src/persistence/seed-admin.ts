@@ -48,6 +48,7 @@ import {
   NOTIFICATION_PERMISSIONS,
   ROLE_ACTION_PERMISSIONS,
   ROLE_PERMISSIONS,
+  SOCIAL_AUTH_CONFIG_PERMISSIONS,
   STORAGE_CONFIG_PERMISSIONS,
   TASK_BOARD_PERMISSIONS,
   TASK_COMMENT_PERMISSIONS,
@@ -169,6 +170,13 @@ function buildActionTree(): ActionDefinition[] {
           description: 'User CRUD operations',
           actionType: ActionType.BOTH,
           children: createCrudActions('User', USER_PERMISSIONS),
+        },
+        {
+          name: 'Social Config Management',
+          code: 'social-config',
+          description: 'Social sign-in provider config CRUD operations',
+          actionType: ActionType.BOTH,
+          children: createCrudActions('Social Config', SOCIAL_AUTH_CONFIG_PERMISSIONS),
         },
         ...(ENABLE_COMPANY_FEATURE
           ? [

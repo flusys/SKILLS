@@ -166,7 +166,7 @@ broker, so prefer `includePayload: false` plus a `metadata` descriptor for anyth
 
 | Module | Entities | Domain actions (beyond CRUD) |
 | ------ | -------- | ---------------------------- |
-| `auth` | `appuser`, `company`, `company_branch`, `session`, `user_company_permission` | `registered`, `password-changed`, `password-reset-requested`, `password-reset`, `email-verified`, `logged-in`, `logged-out`, `token-refreshed`, `company-switched`, `permission-granted`, `permission-revoked` |
+| `auth` | `appuser`, `company`, `company_branch`, `session`, `user_company_permission`, `social_auth_config` | `registered`, `password-changed`, `password-reset-requested`, `password-reset`, `email-verified`, `logged-in`, `logged-out`, `token-refreshed`, `company-switched`, `social-logged-in`, `permission-granted`, `permission-revoked` |
 | `iam` | `action`, `role`, `user_action`, `role_action`, `company_action`, `user_role` | `permissions-assigned` |
 | `storage` | `file_manager`, `folder`, `storageConfig` | `uploaded`, `removed` |
 | `form-builder` | `form`, `form_result` | `submitted`, `draft-saved` |

@@ -11,6 +11,7 @@ isolation, input validation, and the Angular-side authorization mirror.
 | JWT without CSRF tokens | JWT Bearer auth is CSRF-immune |
 | `@Public()` on endpoints | Explicitly marked, not a missed guard |
 | Password in DTO (registration/login) | Hashed before storage, excluded from response |
+| Social sign-in `redirectUri` accepted in `POST /auth/social/authorize` and echoed in the callback | Round-tripped through a single-use, cache-backed `state` token; redemption deletes it and a redirect URI that doesn't match the one sign-in started with is rejected — not an open redirect |
 
 ## A01: Broken Access Control
 
@@ -347,6 +348,7 @@ already logged in), `companyFeatureGuard`, `emailFeatureGuard`.
 | IDOR | UUIDs, verify ownership + companyId |
 | Weak crypto | bcrypt 12+ rounds, no MD5/SHA1 |
 | Sensitive data exposure | `@Exclude()`, `plainToInstance()` |
+| OAuth account takeover via unverified email | `nestjs-auth`'s social sign-in only matches/creates an account by email when the provider marked it verified — an unverified profile is rejected rather than adopted (see nestjs-auth README §5) |
 | Missing rate limits | `@Throttle()` on sensitive endpoints |
 | Insecure cookies | httpOnly, secure, sameSite: strict |
 | Multi-tenant leak | Always scope by `companyId` |
