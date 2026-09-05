@@ -41,25 +41,25 @@ the rules silently never attach.
 
 ## Tech Stack
 
-| Layer    | Stack                                                                   |
-| -------- | ----------------------------------------------------------------------- |
-| Frontend | Angular 22 (signals, standalone, zoneless) + `@flusys/ng-ui` + Tailwind |
-| Backend  | NestJS 11 + TypeORM + PostgreSQL + JWT                                  |
-| Packages | `@flusys/*` **7.0.1** — the release this kit's docs and template are written against |
-| API      | RPC over POST for entity CRUD; GET for domain reads (not REST)          |
-| Ports    | Dashboard `http://localhost:3001` · Backend `http://localhost:3002`     |
+| Layer    | Stack                                                                                |
+| -------- | ------------------------------------------------------------------------------------ |
+| Frontend | Angular 22 (signals, standalone, zoneless) + `@flusys/ng-ui` + Tailwind              |
+| Backend  | NestJS 11 + TypeORM + PostgreSQL + JWT                                               |
+| Packages | `@flusys/*` **7.0.2** — the release this kit's docs and template are written against |
+| API      | RPC over POST for entity CRUD; GET for domain reads (not REST)                       |
+| Ports    | Dashboard `http://localhost:3001` · Backend `http://localhost:3002`                  |
 
 ## Working Model
 
 `@flusys/*` packages are consumed from npm. You configure them; you never read or edit their
 internals. Each package exposes exactly three surfaces:
 
-| Surface           | Backend                                                   | Frontend                                        |
-| ----------------- | --------------------------------------------------------- | ----------------------------------------------- |
-| Registration      | `XxxModule.forRoot(...)` in `app.module.ts`               | `...provideXxxProviders()` in `app.config.ts`   |
-| Options           | `getXxxModuleOptions()` in `config/modules.config.ts`     | `services.xxx` in `environments/environment.ts` |
-| Routes / entities | `getXxxEntitiesByConfig()` in `config/entities.config.ts` | `XXX_ROUTES` in `app.routes.ts`                 |
-| Domain events     | `moduleEventsConfig` in `config/modules.config.ts`, consumed in `src/consumers/` | — (backend only)               |
+| Surface           | Backend                                                                          | Frontend                                        |
+| ----------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Registration      | `XxxModule.forRoot(...)` in `app.module.ts`                                      | `...provideXxxProviders()` in `app.config.ts`   |
+| Options           | `getXxxModuleOptions()` in `config/modules.config.ts`                            | `services.xxx` in `environments/environment.ts` |
+| Routes / entities | `getXxxEntitiesByConfig()` in `config/entities.config.ts`                        | `XXX_ROUTES` in `app.routes.ts`                 |
+| Domain events     | `moduleEventsConfig` in `config/modules.config.ts`, consumed in `src/consumers/` | — (backend only)                                |
 
 ## Skills & Agents
 
@@ -157,8 +157,8 @@ actually needed.
   reporting services are the one exception: they may query any entity directly for aggregations,
   but never mutate. Track ownership in a table here as domains grow past one entity, e.g.:
 
-  | Entity | Owning Service |
-  | ------ | -------------- |
+  | Entity     | Owning Service    |
+  | ---------- | ----------------- |
   | `<Entity>` | `<Entity>Service` |
 
 ## Learned Rules
